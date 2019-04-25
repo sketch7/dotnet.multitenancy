@@ -47,7 +47,7 @@ namespace Sketch7.Multitenancy.Grace.AspNet
 
 	public static class MultitenancyMiddlewareExtensions
 	{
-		public static IApplicationBuilder UseMultitenancy<TTenant>(this IApplicationBuilder builder, MultitenancyMiddlewareOptions options) where TTenant : class, ITenant
+		public static IApplicationBuilder UseMultitenancy<TTenant>(this IApplicationBuilder builder, MultitenancyMiddlewareOptions options = null) where TTenant : class, ITenant
 			=> builder.UseMiddleware<MultitenancyMiddleware<TTenant>>(options ?? new MultitenancyMiddlewareOptions());
 	}
 

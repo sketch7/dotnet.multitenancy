@@ -12,7 +12,7 @@ namespace Sketch7.Multitenancy.Sample.Api
 
 		public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
 			WebHost.CreateDefaultBuilder(args)
-				.UseUrls("http://localhost:5500/")
+				.UseUrls("http://localhost:5001/")
 				.UseStartup<Startup>();
 	}
 }

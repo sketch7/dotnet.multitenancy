@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Sketch7.Multitenancy.Grace.AspNet;
+using Sketch7.Multitenancy.Sample.Api.Tenancy;
 
 namespace Sketch7.Multitenancy.Sample.Api
 {
@@ -19,7 +21,8 @@ namespace Sketch7.Multitenancy.Sample.Api
 		public void ConfigureServices(IServiceCollection services)
 		{
 			services
-				//.AddFluentlyHttpClient()
+				.AddSingleton<IAppTenantRegistry, AppTenantRegistry>()
+				.AddSingleton<ITenantHttpResolver<AppTenant>, AppTenantHttpResolver>()
 				.AddMvc()
 				.SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
 		}
@@ -32,6 +35,7 @@ namespace Sketch7.Multitenancy.Sample.Api
 				app.UseDeveloperExceptionPage();
 			}
 
+			app.UseMultitenancy<AppTenant>();
 			app.UseMvc();
 		}
 	}
