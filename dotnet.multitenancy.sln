@@ -32,7 +32,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sketch7.Multitenancy.Test",
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sketch7.Multitenancy.Sample.Api", "samples\Sketch7.Multitenancy.Sample.Api\Sketch7.Multitenancy.Sample.Api.csproj", "{882AA0A8-83EA-47B8-8BFC-4C81E35974F1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sketch7.Multitenancy", "src\Sketch7.Multitenancy\Sketch7.Multitenancy.csproj", "{F96C1EB9-4C8D-49E3-A2EB-A0D9BEB8CF4F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sketch7.Multitenancy", "src\Sketch7.Multitenancy\Sketch7.Multitenancy.csproj", "{F96C1EB9-4C8D-49E3-A2EB-A0D9BEB8CF4F}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sketch7.Multitenancy.Grace", "src\Sketch7.Multitenancy.Grace\Sketch7.Multitenancy.Grace.csproj", "{2B9D58CE-01F9-4501-83DA-AF0D9CB1555B}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sketch7.Multitenancy.Grace.AspNet", "src\Sketch7.Multitenancy.Grace.AspNet\Sketch7.Multitenancy.Grace.AspNet.csproj", "{9B483D69-DB7C-48AB-8C4A-ACBB428F9963}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sketch7.Multitenancy.Grace.Orleans", "src\Sketch7.Multitenancy.Grace.Orleans\Sketch7.Multitenancy.Grace.Orleans.csproj", "{BB15BBC9-10F7-4C75-8202-FBDACD82E8D2}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -52,6 +58,18 @@ Global
 		{F96C1EB9-4C8D-49E3-A2EB-A0D9BEB8CF4F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F96C1EB9-4C8D-49E3-A2EB-A0D9BEB8CF4F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F96C1EB9-4C8D-49E3-A2EB-A0D9BEB8CF4F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2B9D58CE-01F9-4501-83DA-AF0D9CB1555B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2B9D58CE-01F9-4501-83DA-AF0D9CB1555B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2B9D58CE-01F9-4501-83DA-AF0D9CB1555B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2B9D58CE-01F9-4501-83DA-AF0D9CB1555B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9B483D69-DB7C-48AB-8C4A-ACBB428F9963}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9B483D69-DB7C-48AB-8C4A-ACBB428F9963}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9B483D69-DB7C-48AB-8C4A-ACBB428F9963}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9B483D69-DB7C-48AB-8C4A-ACBB428F9963}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BB15BBC9-10F7-4C75-8202-FBDACD82E8D2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BB15BBC9-10F7-4C75-8202-FBDACD82E8D2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BB15BBC9-10F7-4C75-8202-FBDACD82E8D2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BB15BBC9-10F7-4C75-8202-FBDACD82E8D2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -60,6 +78,9 @@ Global
 		{93E2EFD3-D343-43B8-B8B7-5738A0FAF9CF} = {43279F19-C7CE-4D7F-99CC-3B410C685F09}
 		{882AA0A8-83EA-47B8-8BFC-4C81E35974F1} = {EF87A44F-A75B-4C2F-86CD-402EBB8D0F3F}
 		{F96C1EB9-4C8D-49E3-A2EB-A0D9BEB8CF4F} = {9D4AF283-91A7-4EFF-A212-8242B0F9E680}
+		{2B9D58CE-01F9-4501-83DA-AF0D9CB1555B} = {9D4AF283-91A7-4EFF-A212-8242B0F9E680}
+		{9B483D69-DB7C-48AB-8C4A-ACBB428F9963} = {9D4AF283-91A7-4EFF-A212-8242B0F9E680}
+		{BB15BBC9-10F7-4C75-8202-FBDACD82E8D2} = {9D4AF283-91A7-4EFF-A212-8242B0F9E680}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {AF414626-8BE4-4992-8E6F-AFAFF7644AE5}

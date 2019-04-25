@@ -3,8 +3,17 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <Description>Multitenancy abstractions and core services for .NET Standard.</Description>
-    <PackageTags>$(PackageTags) abstractions core</PackageTags>
+    <PackageTags>$(PackageTags) grace</PackageTags>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Grace" Version="$(GraceVersion)" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="$(MicrosoftExtensionsVersion)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Sketch7.Multitenancy\Sketch7.Multitenancy.csproj" />
+  </ItemGroup>
 
 
 </Project>

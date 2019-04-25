@@ -13,6 +13,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\Sketch7.Multitenancy.Grace.AspNet\Sketch7.Multitenancy.Grace.AspNet.csproj" />
+    <ProjectReference Include="..\..\src\Sketch7.Multitenancy\Sketch7.Multitenancy.csproj" />
   </ItemGroup>
 
 </Project>
