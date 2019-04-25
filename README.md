@@ -43,20 +43,6 @@ public void ConfigureServices(IServiceCollection services)
 }
 ```
 
-Configure an Http client using the Http Factory (you need at least one).
-```cs
-// using Startup.cs (can be elsewhere)
-public void Configure(IApplicationBuilder app, IFluentHttpClientFactory fluentHttpClientFactory)
-{
-  fluentHttpClientFactory.CreateBuilder(identifier: "platform") // keep a note of the identifier, its needed later
-    .WithBaseUrl("http://sketch7.com") // required
-    .WithHeader("user-agent", "slabs-testify")
-    .WithTimeout(5)
-    .UseMiddleware<LoggerHttpMiddleware>()
-    .Register(); // register client builder to factory
-}
-```
-
 ### Basic usage
 
 > todo
