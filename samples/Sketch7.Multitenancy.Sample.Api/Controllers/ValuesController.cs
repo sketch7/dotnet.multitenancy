@@ -1,26 +1,21 @@
-﻿using System.Collections.Generic;
+﻿using Microsoft.AspNetCore.Mvc;
+using System.Collections.Generic;
 using System.Threading.Tasks;
-using FluentlyHttpClient.Entity;
-using Microsoft.AspNetCore.Mvc;
 
-namespace FluentlyHttpClient.Sample.Api.Controllers
+namespace Sketch7.Multitenancy.Sample.Api.Controllers
 {
 	[Route("api/[controller]")]
 	[ApiController]
 	public class ValuesController : ControllerBase
 	{
-		private readonly FluentHttpClientDbContext _dbContext;
-
-		public ValuesController(FluentHttpClientDbContext dbContext)
+		public ValuesController()
 		{
-			_dbContext = dbContext;
 		}
 
 		// GET api/values
 		[HttpGet]
 		public async Task<IEnumerable<string>> Get()
 		{
-			await _dbContext.Initialize();
 			return new string[] { "value1", "value2" };
 		}
 

@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 
-namespace FluentlyHttpClient.Sample.Api
+namespace Sketch7.Multitenancy.Sample.Api
 {
 	public class Program
 	{

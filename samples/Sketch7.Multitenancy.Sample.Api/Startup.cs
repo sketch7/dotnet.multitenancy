@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace FluentlyHttpClient.Sample.Api
+namespace Sketch7.Multitenancy.Sample.Api
 {
 	public class Startup
 	{
@@ -19,8 +19,7 @@ namespace FluentlyHttpClient.Sample.Api
 		public void ConfigureServices(IServiceCollection services)
 		{
 			services
-				.AddFluentlyHttpClient()
-				.AddFluentlyHttpClientEntity(Configuration.GetConnectionString("FluentlyDatabase"))
+				//.AddFluentlyHttpClient()
 				.AddMvc()
 				.SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
 		}

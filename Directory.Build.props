@@ -12,7 +12,7 @@
     <Copyright>© sketch7. All rights reserved.</Copyright>
     <PackageProjectUrl>https://github.com/sketch7/dotnet.multitenancy</PackageProjectUrl>
     <PackageIconUrl>https://avatars0.githubusercontent.com/u/16617196?v=3&amp;s=200</PackageIconUrl>
-    <PackageTags>httpclient fluentapi fluenthttp graphql graphqlclient</PackageTags>
+    <PackageTags>multitenant multitenancy grace orleans</PackageTags>
     <PackageReleaseNotes></PackageReleaseNotes>
     <RepositoryUrl>https://github.com/sketch7/dotnet.multitenancy.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
