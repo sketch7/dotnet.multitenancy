@@ -1,7 +1,7 @@
 {
   "name": "@sketch7/dotnet.multitenancy",
   "version": "0.1.0",
-  "versionSuffix": "",
+  "versionSuffix": "dev1",
   "scripts": {
     "pack": "bash ./tools/pack.sh",
     "prepublish:dev": "npm run pack",
