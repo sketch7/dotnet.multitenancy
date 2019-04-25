@@ -1,4 +1,4 @@
-# Fluently Http Changelog
+# Changelog
 
 [*vNext*](https://github.com/sketch7/dotnet.multitenancy/compare/3.0.0...3.1.0) (2019-X-X)
 
