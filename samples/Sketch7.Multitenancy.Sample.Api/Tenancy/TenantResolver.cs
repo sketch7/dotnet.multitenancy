@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text.RegularExpressions;
-
-namespace Sketch7.Multitenancy.Sample.Api.Tenancy
+﻿namespace Sketch7.Multitenancy.Sample.Api.Tenancy
 {
 	//public interface IAppTenantResolver
 	//{

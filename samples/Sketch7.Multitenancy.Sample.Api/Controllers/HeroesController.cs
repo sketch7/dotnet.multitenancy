@@ -1,7 +1,7 @@
-﻿using System.Collections.Generic;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Sketch7.Multitenancy.Sample.Api.Heroes;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Sketch7.Multitenancy.Sample.Api.Controllers
 {
