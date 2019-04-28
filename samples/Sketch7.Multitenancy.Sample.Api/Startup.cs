@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿using Grace.DependencyInjection;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -27,6 +28,36 @@ namespace Sketch7.Multitenancy.Sample.Api
 				.SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
 		}
 
+		public void ConfigureContainer(IInjectionScope scope)
+		{
+			scope.Configure(c =>
+			{
+				c.ExportTenant<AppTenant>();
+
+				//var tenantRegistry = scope.Locate<IAppTenantRegistry>();
+				//c.PopulateFrom(services => services.AddCors(o => o.AddPolicy(CorsPolicyNames.Api, builder =>
+				//{
+				//	builder.SetIsOriginAllowed(host =>
+				//		{
+				//			var brand = tenantRegistry.ResolveByDomain(host);
+				//			return brand != null;
+				//		})
+				//		.AllowAnyMethod()
+				//		.AllowAnyHeader()
+				//		.AllowCredentials();
+				//})));
+			});
+
+			scope.ForTenants<AppTenant, IAppTenantRegistry>(tcb =>
+			{
+				tcb.ForTenant(tenant => tenant.Organization == OrganizationNames.Blizzard,
+					tc => tc.PopulateFrom(s => s.AddAppBlizzardServices()));
+
+				tcb.ForTenant(tenant => tenant.Organization == OrganizationNames.Riot,
+					tc => tc.PopulateFrom(s => s.AddAppRiotServices()));
+			});
+		}
+
 		// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
 		public void Configure(IApplicationBuilder app, IHostingEnvironment env)
 		{
@@ -35,6 +66,7 @@ namespace Sketch7.Multitenancy.Sample.Api
 				app.UseDeveloperExceptionPage();
 			}
 
+			//app.UseCors(CorsPolicyNames.Api);
 			app.UseMultitenancy<AppTenant>();
 			app.UseMvc();
 		}

@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore;
+﻿using Grace.AspNetCore.Hosting;
+using Grace.DependencyInjection;
+using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 
 namespace Sketch7.Multitenancy.Sample.Api
@@ -12,6 +14,13 @@ namespace Sketch7.Multitenancy.Sample.Api
 
 		public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
 			WebHost.CreateDefaultBuilder(args)
+				.UseGrace(new InjectionScopeConfiguration
+				{
+					Behaviors =
+					{
+						AllowInstanceAndFactoryToReturnNull = true
+					}
+				})
 				.UseUrls("http://localhost:5001/")
 				.UseStartup<Startup>();
 	}

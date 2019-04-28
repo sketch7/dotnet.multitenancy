@@ -5,6 +5,13 @@ using System.Text.RegularExpressions;
 
 namespace Sketch7.Multitenancy.Sample.Api.Tenancy
 {
+	public static class OrganizationNames
+	{
+		public const string Riot = "riot";
+		public const string Blizzard = "blizzard";
+		public const string Sketch7 = "sketch7";
+	}
+
 	public interface IAppTenantRegistry : ITenantRegistry<AppTenant>
 	{
 		//AppTenant GetOrDefault(string brandId);
@@ -22,14 +29,14 @@ namespace Sketch7.Multitenancy.Sample.Api.Tenancy
 		{
 			Key = "lol",
 			Name = "League of Legends",
-			Organization = "riot"
+			Organization = OrganizationNames.Riot
 		};
 
 		public static readonly AppTenant HeroesOfTheStorm = new AppTenant
 		{
 			Key = "hots",
 			Name = "Heroes of the Storm",
-			Organization = "blizzard"
+			Organization = OrganizationNames.Blizzard
 		};
 
 		private readonly Dictionary<string, AppTenant> _tenants;
