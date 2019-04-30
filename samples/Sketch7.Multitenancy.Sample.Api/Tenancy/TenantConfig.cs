@@ -1,6 +1,9 @@
-﻿namespace Sketch7.Multitenancy.Sample.Api.Tenancy
+﻿using System.Diagnostics;
+
+namespace Sketch7.Multitenancy.Sample.Api.Tenancy
 {
-	public class TenantConfig
+	[DebuggerDisplay("{DebuggerDisplay,nq}")]
+	public class AppTenantConfig
 	{
 		protected string DebuggerDisplay => $"Id: '{Id}', Name: '{Name}', IsDisabled: {IsDisabled}, Organization: {Organization}";
 
