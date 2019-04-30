@@ -1,7 +1,12 @@
-﻿namespace Sketch7.Multitenancy.Sample.Api.Tenancy
+﻿using System.Diagnostics;
+
+namespace Sketch7.Multitenancy.Sample.Api.Tenancy
 {
+	[DebuggerDisplay("{DebuggerDisplay,nq}")]
 	public class AppTenant : ITenant
 	{
+		protected string DebuggerDisplay => $"Key: '{Key}', Name: '{Name}', Organization: {Organization}";
+
 		/// <inheritdoc />
 		public string Key { get; set; }
 
