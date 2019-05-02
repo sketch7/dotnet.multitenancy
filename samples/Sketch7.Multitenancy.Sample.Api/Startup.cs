@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Sketch7.Multitenancy.Grace.AspNet;
+using Sketch7.Multitenancy.Sample.Api.Heroes;
 using Sketch7.Multitenancy.Sample.Api.Tenancy;
 
 namespace Sketch7.Multitenancy.Sample.Api
@@ -22,6 +23,7 @@ namespace Sketch7.Multitenancy.Sample.Api
 		public void ConfigureServices(IServiceCollection services)
 		{
 			services
+				.AddSingleton<IDataClientManager, DataClientManager>()
 				.AddSingleton<IAppTenantRegistry, AppTenantRegistry>()
 				.AddSingleton<ITenantHttpResolver<AppTenant>, AppTenantHttpResolver>()
 				.AddMvc()

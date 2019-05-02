@@ -6,5 +6,4 @@
     <PackageTags>$(PackageTags) abstractions core</PackageTags>
   </PropertyGroup>
 
-
 </Project>

@@ -18,9 +18,13 @@ namespace Sketch7.Multitenancy.Sample.Api.Heroes
 
 		public Guid InstanceId { get; } = Guid.NewGuid();
 
-		public MockLoLHeroDataClient(ILogger<MockLoLHeroDataClient> logger)
+		public MockLoLHeroDataClient(
+			ILogger<MockLoLHeroDataClient> logger,
+			IDataClientManager clientManager
+		)
 		{
 			_logger = logger;
+			clientManager.Register(this);
 		}
 
 		public Task<List<Hero>> GetAll()
@@ -50,9 +54,13 @@ namespace Sketch7.Multitenancy.Sample.Api.Heroes
 
 		public Guid InstanceId { get; } = Guid.NewGuid();
 
-		public MockHotsHeroDataClient(ILogger<MockHotsHeroDataClient> logger)
+		public MockHotsHeroDataClient(
+			ILogger<MockHotsHeroDataClient> logger,
+			IDataClientManager clientManager
+		)
 		{
 			_logger = logger;
+			clientManager.Register(this);
 		}
 
 		public Task<List<Hero>> GetAll()
