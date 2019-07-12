@@ -52,6 +52,10 @@ namespace Sketch7.Multitenancy.Sample.Api
 
 			scope.ForTenants<AppTenant, IAppTenantRegistry>(tcb =>
 			{
+				// #singleton issue - register singleton per tenant
+				tcb.ForAll(tc => tc.PopulateFrom(s => s.AddSingleton<HerozClientSub>()));
+				//tcb.ForAll(tc => tc.PopulateFrom(s => s.AddScoped<HerozClientSub>()));
+
 				tcb.ForTenant(tenant => tenant.Organization == OrganizationNames.Blizzard,
 					tc => tc.PopulateFrom(s => s.AddAppBlizzardServices()));
 

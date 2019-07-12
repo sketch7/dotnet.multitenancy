@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using Sketch7.Multitenancy.Sample.Api.Tenancy;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,6 +7,14 @@ using System.Threading.Tasks;
 
 namespace Sketch7.Multitenancy.Sample.Api.Heroes
 {
+	public class HerozClientSub
+	{
+		public HerozClientSub(AppTenant tenant)
+		{
+		}
+	}
+
+
 	public interface IHeroDataClient
 	{
 		Task<Hero> GetByKey(string key);
@@ -20,7 +29,8 @@ namespace Sketch7.Multitenancy.Sample.Api.Heroes
 
 		public MockLoLHeroDataClient(
 			ILogger<MockLoLHeroDataClient> logger,
-			IDataClientManager clientManager
+			IDataClientManager clientManager,
+			HerozClientSub subz
 		)
 		{
 			_logger = logger;

@@ -13,7 +13,9 @@ namespace Microsoft.Extensions.DependencyInjection
 
 		public static IServiceCollection AddAppRiotServices(this IServiceCollection services)
 		{
+			// #singleton issue - register singleton per tenant
 			services.AddSingleton<IHeroDataClient, MockLoLHeroDataClient>();
+			//services.AddScoped<IHeroDataClient, MockLoLHeroDataClient>();
 			return services;
 		}
 	}
