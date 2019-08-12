@@ -66,7 +66,8 @@ namespace Sketch7.Multitenancy.Sample.Api.Heroes
 
 		public MockHotsHeroDataClient(
 			ILogger<MockHotsHeroDataClient> logger,
-			IDataClientManager clientManager
+			IDataClientManager clientManager,
+			HerozClientSub subz
 		)
 		{
 			_logger = logger;

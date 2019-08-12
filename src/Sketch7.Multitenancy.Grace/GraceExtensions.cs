@@ -42,7 +42,13 @@ namespace Grace.DependencyInjection
 			switch (lifetime)
 			{
 				case ServiceLifetime.Singleton:
-					return configuration.Lifestyle.Singleton();
+					// todo: when not multi tenantable (asPerTenant: false) use Singleton?
+					return configuration.Lifestyle.SingletonPerKey((scope, context) =>
+					{
+						var tenant = scope.GetTenantContext();
+						return tenant?.Key;
+					});
+				//return configuration.Lifestyle.Singleton();
 				case ServiceLifetime.Scoped:
 					return configuration.Lifestyle.SingletonPerScope();
 			}
@@ -56,7 +62,12 @@ namespace Grace.DependencyInjection
 			switch (lifecycleKind)
 			{
 				case ServiceLifetime.Singleton:
-					return configuration.Lifestyle.Singleton();
+					// todo: when not multi tenantable (asPerTenant: false) use Singleton?
+					return configuration.Lifestyle.SingletonPerKey((scope, context) =>
+					{
+						var tenant = scope.GetTenantContext();
+						return tenant?.Key;
+					});
 				case ServiceLifetime.Scoped:
 					return configuration.Lifestyle.SingletonPerScope();
 			}
