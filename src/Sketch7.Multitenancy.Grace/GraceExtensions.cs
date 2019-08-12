@@ -46,7 +46,7 @@ namespace Grace.DependencyInjection
 					return configuration.Lifestyle.SingletonPerKey((scope, context) =>
 					{
 						var tenant = scope.GetTenantContext();
-						return tenant?.Key;
+						return tenant.Key;
 					});
 				//return configuration.Lifestyle.Singleton();
 				case ServiceLifetime.Scoped:

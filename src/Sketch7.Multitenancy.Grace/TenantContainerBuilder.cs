@@ -17,6 +17,7 @@ namespace Sketch7.Multitenancy.Grace
 			_tenant = tenant;
 		}
 
+		// todo: remove param 'asPerTenant' and perhaps move to scope.PopulateFrom
 		public void PopulateFrom(Action<IServiceCollection> configure, IServiceCollection services = null, bool asPerTenant = true)
 		{
 			services = services ?? new ServiceCollection();
