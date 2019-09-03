@@ -14,6 +14,7 @@ namespace Sketch7.Multitenancy.Sample.Api.Tenancy
 		}
 
 		public Task<AppTenant> Resolve(HttpContext httpContext)
+			// todo: move to lib - configurable Header + Allow from route + domain resolving
 			=> httpContext.Request.Headers.TryGetValue("X-SSV-Tenant", out var tenantValue)
 				? Task.FromResult(_tenantRegistry.GetOrDefault(tenantValue))
 				: Task.FromResult<AppTenant>(null);
