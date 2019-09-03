@@ -23,7 +23,7 @@ namespace Sketch7.Multitenancy.Grace.AspNet
 		{
 			_next = next;
 			_tenantHttpResolver = tenantHttpResolver;
-			_tenantInvalidJson = JsonConvert.SerializeObject(options.ConfigureInvalidTenant());
+			_tenantInvalidJson = JsonConvert.SerializeObject(options.InvalidTenantFunc());
 		}
 
 		public async Task Invoke(
@@ -53,7 +53,18 @@ namespace Sketch7.Multitenancy.Grace.AspNet
 
 	public class MultitenancyMiddlewareOptions
 	{
-		public Func<object> ConfigureInvalidTenant { get; set; } = GetDefaultInvalidTenant;
+		internal Func<object> InvalidTenantFunc { get; set; } = GetDefaultInvalidTenant;
+
+		/// <summary>
+		/// Configure invalid tenant object response.
+		/// </summary>
+		/// <param name="configure"></param>
+		/// <returns>Returns object to return when invalid tenant.</returns>
+		public MultitenancyMiddlewareOptions WithInvalidTenant(Func<object> configure)
+		{
+			InvalidTenantFunc = configure;
+			return this;
+		}
 
 		private static object GetDefaultInvalidTenant()
 			=> new { errorCode = "error.invalid:tenant" };
