@@ -91,6 +91,11 @@ namespace Grace.DependencyInjection
 			return config;
 		}
 
+		/// <summary>
+		/// Exports the Tenant factory.
+		/// </summary>
+		/// <typeparam name="TTenant">Tenant type.</typeparam>
+		/// <param name="config"></param>
 		public static IExportRegistrationBlock ExportTenant<TTenant>(this IExportRegistrationBlock config)
 			where TTenant : ITenant
 		{
