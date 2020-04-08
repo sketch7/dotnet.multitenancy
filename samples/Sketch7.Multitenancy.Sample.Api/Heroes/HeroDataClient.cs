@@ -40,7 +40,7 @@ namespace Sketch7.Multitenancy.Sample.Api.Heroes
 		}
 	}
 
-	public class MockHotsHeroDataClient : IHeroDataClient
+	public class MockHotsHeroDataClient : IHeroDataClient, IDisposable
 	{
 		private readonly ILogger<MockHotsHeroDataClient> _logger;
 		private readonly List<Hero> _data = new List<Hero>
@@ -73,6 +73,10 @@ namespace Sketch7.Multitenancy.Sample.Api.Heroes
 		{
 			_logger.LogDebug($"[{nameof(GetByKey)}] Fetching key: {{key}} from mock service ({{instanceId}})", key, InstanceId);
 			return Task.FromResult(_data.Find(x => x.Key == key));
+		}
+
+		public void Dispose()
+		{
 		}
 	}
 }

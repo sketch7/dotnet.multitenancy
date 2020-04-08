@@ -10,16 +10,16 @@ namespace Grace.DependencyInjection
 {
 	public static class GraceExtensions
 	{
-		private const string TenantKey = "multitenancy:tenant";
+		private const string TENANT_KEY = "tenant";
 
 		public static ITenant GetTenantContext(this IExtraDataContainer scopeData)
-			=> (ITenant)scopeData.GetExtraData(TenantKey);
+			=> (ITenant)scopeData.GetExtraData(TENANT_KEY);
 
 		public static TTenant GetTenantContext<TTenant>(this IExtraDataContainer scopeData) where TTenant : ITenant
 			=> (TTenant)scopeData.GetTenantContext();
 
 		public static ITenant SetTenantContext(this IExtraDataContainer scopeData, ITenant tenant)
-			=> (ITenant)scopeData.SetExtraData(TenantKey, tenant);
+			=> (ITenant)scopeData.SetExtraData(TENANT_KEY, tenant);
 	}
 
 	public static class GraceContainerExtensions
@@ -37,12 +37,19 @@ namespace Grace.DependencyInjection
 			);
 
 		// todo: ask Grace to expose?
-		public static IFluentExportStrategyConfiguration ConfigureLifetime(this IFluentExportStrategyConfiguration configuration, ServiceLifetime lifetime)
+		public static IFluentExportStrategyConfiguration ConfigureLifetime(this IFluentExportStrategyConfiguration configuration, ServiceLifetime lifetime, bool asPerTenant)
 		{
 			switch (lifetime)
 			{
 				case ServiceLifetime.Singleton:
-					return configuration.Lifestyle.Singleton();
+					if (asPerTenant)
+						return configuration.Lifestyle.SingletonPerKey((scope, context) =>
+						{
+							var tenant = context.GetTenantContext() ?? scope.GetTenantContext();
+							return tenant.Key;
+						});
+					else
+						return configuration.Lifestyle.Singleton();
 				case ServiceLifetime.Scoped:
 					return configuration.Lifestyle.SingletonPerScope();
 			}
@@ -51,12 +58,19 @@ namespace Grace.DependencyInjection
 		}
 
 		// todo: ask Grace to expose?
-		public static IFluentExportInstanceConfiguration<T> ConfigureLifetime<T>(this IFluentExportInstanceConfiguration<T> configuration, ServiceLifetime lifecycleKind)
+		public static IFluentExportInstanceConfiguration<T> ConfigureLifetime<T>(this IFluentExportInstanceConfiguration<T> configuration, ServiceLifetime lifecycleKind, bool asPerTenant)
 		{
 			switch (lifecycleKind)
 			{
 				case ServiceLifetime.Singleton:
-					return configuration.Lifestyle.Singleton();
+					if (asPerTenant)
+						return configuration.Lifestyle.SingletonPerKey((scope, context) =>
+						{
+							var tenant = context.GetTenantContext() ?? scope.GetTenantContext();
+							return tenant.Key;
+						});
+					else
+						return configuration.Lifestyle.Singleton();
 				case ServiceLifetime.Scoped:
 					return configuration.Lifestyle.SingletonPerScope();
 			}
@@ -64,7 +78,7 @@ namespace Grace.DependencyInjection
 			return configuration;
 		}
 
-		public static void PopulateFrom(this IExportRegistrationBlock exportConfig, Action<IServiceCollection> configure, IServiceCollection services = null)
+		public static void PopulateFrom(this IExportRegistrationBlock exportConfig, Action<IServiceCollection> configure, ServiceCollection services = null)
 		{
 			services = services ?? new ServiceCollection();
 			configure(services);
@@ -77,11 +91,11 @@ namespace Grace.DependencyInjection
 			foreach (var descriptor in descriptors)
 			{
 				if ((object)descriptor.ImplementationType != null)
-					exportConfig.Export(descriptor.ImplementationType).As(descriptor.ServiceType).ConfigureLifetime(descriptor.Lifetime);
+					exportConfig.Export(descriptor.ImplementationType).As(descriptor.ServiceType).ConfigureLifetime(descriptor.Lifetime, asPerTenant: false);
 				else if (descriptor.ImplementationFactory != null)
-					exportConfig.ExportFactory(descriptor.ImplementationFactory).As(descriptor.ServiceType).ConfigureLifetime(descriptor.Lifetime);
+					exportConfig.ExportFactory(descriptor.ImplementationFactory).As(descriptor.ServiceType).ConfigureLifetime(descriptor.Lifetime, asPerTenant: false);
 				else
-					exportConfig.ExportInstance(descriptor.ImplementationInstance).As(descriptor.ServiceType).ConfigureLifetime(descriptor.Lifetime);
+					exportConfig.ExportInstance(descriptor.ImplementationInstance).As(descriptor.ServiceType).ConfigureLifetime(descriptor.Lifetime, asPerTenant: false);
 			}
 		}
 

@@ -17,13 +17,14 @@ namespace Sketch7.Multitenancy.Grace
 			_tenant = tenant;
 		}
 
+		// todo: remove param 'asPerTenant' and perhaps move to scope.PopulateFrom
 		public void PopulateFrom(Action<IServiceCollection> configure, IServiceCollection services = null, bool asPerTenant = true)
 		{
 			services = services ?? new ServiceCollection();
 			configure(services);
 
 			if (asPerTenant)
-				RegisterPerTenant(_exportConfig, services, _tenant);
+				RegisterPerTenant(_exportConfig, services, _tenant, asPerTenant: true);
 			else
 				_exportConfig.PopulateFrom(services);
 		}
@@ -31,16 +32,16 @@ namespace Sketch7.Multitenancy.Grace
 		public void PopulateFrom(Action<IServiceCollection, TTenant> configure, IServiceCollection services = null, bool asPerTenant = true)
 			=> PopulateFrom(s => configure(s, _tenant), services, asPerTenant);
 
-		private static void RegisterPerTenant(IExportRegistrationBlock exportConfig, IEnumerable<ServiceDescriptor> descriptors, TTenant tenant)
+		private static void RegisterPerTenant(IExportRegistrationBlock exportConfig, IEnumerable<ServiceDescriptor> descriptors, TTenant tenant, bool asPerTenant = true)
 		{
 			foreach (var descriptor in descriptors)
 			{
 				if ((object)descriptor.ImplementationType != null)
-					exportConfig.Export(descriptor.ImplementationType).AsKeyed(descriptor.ServiceType, tenant.Key).ConfigureLifetime(descriptor.Lifetime);
+					exportConfig.Export(descriptor.ImplementationType).AsKeyed(descriptor.ServiceType, tenant.Key).ConfigureLifetime(descriptor.Lifetime, asPerTenant);
 				else if (descriptor.ImplementationFactory != null)
-					exportConfig.ExportFactory(descriptor.ImplementationFactory).AsKeyed(descriptor.ServiceType, tenant.Key).ConfigureLifetime(descriptor.Lifetime);
+					exportConfig.ExportFactory(descriptor.ImplementationFactory).AsKeyed(descriptor.ServiceType, tenant.Key).ConfigureLifetime(descriptor.Lifetime, asPerTenant);
 				else
-					exportConfig.ExportInstance(descriptor.ImplementationInstance).AsKeyed(descriptor.ServiceType, tenant.Key).ConfigureLifetime(descriptor.Lifetime);
+					exportConfig.ExportInstance(descriptor.ImplementationInstance).AsKeyed(descriptor.ServiceType, tenant.Key).ConfigureLifetime(descriptor.Lifetime, asPerTenant);
 
 				exportConfig.ExportPerTenantFactory(descriptor.ServiceType);
 			}

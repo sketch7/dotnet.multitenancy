@@ -36,7 +36,7 @@
 
   <!-- Shared Package Versions -->
   <PropertyGroup>
-    <MicrosoftExtensionsVersion>2.1.*</MicrosoftExtensionsVersion>
-    <GraceVersion>7.0.*</GraceVersion>
+    <MicrosoftExtensionsVersion>2.2.*</MicrosoftExtensionsVersion>
+    <GraceVersion>7.1.0</GraceVersion>
   </PropertyGroup>
 </Project>
