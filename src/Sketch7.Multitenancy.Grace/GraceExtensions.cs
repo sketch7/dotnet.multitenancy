@@ -138,7 +138,7 @@ namespace Grace.DependencyInjection
 
 				if (tenant == null) throw new ArgumentNullException("tenant", "Tenant must be defined");
 				return scope.Locate(withKey: tenant, type: interfaceType, extraData: injectionContext);
-			}).As(interfaceType);
+			}).As(interfaceType).ExternallyOwned();
 			return config;
 		}
 
