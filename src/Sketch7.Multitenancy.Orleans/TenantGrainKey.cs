@@ -30,7 +30,7 @@ public static class TenantGrainKey
 		var separatorIndex = compositeKey.IndexOf(Separator);
 		if (separatorIndex <= 0)
 			throw new FormatException(
-				$"Invalid tenant grain key format '{compositeKey}'. Expected format: '{{tenantKey}}/{{{nameof(compositeKey)}}}'.");
+				$"Invalid tenant grain key format '{compositeKey}'. Expected format: '{{tenantKey}}/{{grainKey}}'.");
 		return compositeKey[..separatorIndex];
 	}
 
@@ -44,7 +44,7 @@ public static class TenantGrainKey
 		var separatorIndex = compositeKey.IndexOf(Separator);
 		if (separatorIndex <= 0 || separatorIndex >= compositeKey.Length - 1)
 			throw new FormatException(
-				$"Invalid tenant grain key format '{compositeKey}'. Expected format: '{{tenantKey}}/{{{nameof(compositeKey)}}}'.");
+				$"Invalid tenant grain key format '{compositeKey}'. Expected format: '{{tenantKey}}/{{grainKey}}'.");
 		return compositeKey[(separatorIndex + 1)..];
 	}
 

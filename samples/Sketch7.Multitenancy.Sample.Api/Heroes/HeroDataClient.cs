@@ -31,9 +31,12 @@ public class MockLoLHeroDataClient : IHeroDataClient
 
 	public Task<Hero?> GetByKey(string key)
 	{
-		_logger.LogDebug("[{Method}] Fetching key: {Key} from mock service ({InstanceId})", nameof(GetByKey), key, InstanceId);
+		_logger.LogDebug("[{Method}] Fetching key: {Key} from mock service ({InstanceId})", nameof(GetByKey), SanitizeForLog(key), InstanceId);
 		return Task.FromResult(MockDataService.GetById(key));
 	}
+
+	private static string SanitizeForLog(string value)
+		=> value.Replace(Environment.NewLine, string.Empty).Replace("\n", string.Empty).Replace("\r", string.Empty);
 }
 
 public class MockHotsHeroDataClient : IHeroDataClient, IDisposable
@@ -67,9 +70,12 @@ public class MockHotsHeroDataClient : IHeroDataClient, IDisposable
 
 	public Task<Hero?> GetByKey(string key)
 	{
-		_logger.LogDebug("[{Method}] Fetching key: {Key} from mock service ({InstanceId})", nameof(GetByKey), key, InstanceId);
+		_logger.LogDebug("[{Method}] Fetching key: {Key} from mock service ({InstanceId})", nameof(GetByKey), SanitizeForLog(key), InstanceId);
 		return Task.FromResult(_data.Find(x => x.Key == key));
 	}
+
+	private static string SanitizeForLog(string value)
+		=> value.Replace(Environment.NewLine, string.Empty).Replace("\n", string.Empty).Replace("\r", string.Empty);
 
 	public void Dispose() { }
 }

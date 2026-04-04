@@ -7,6 +7,6 @@
     "prepublish:dev": "npm run pack",
     "publish:dev": "bash ./tools/publish.sh",
     "postpublish:dev": "rm -rf *.*nupkg",
-    "test": "find test/**/*.csproj | xargs -I{} dotnet test {} -c Release --filter Category!=e2e"
+    "test": "find test -name '*.csproj' | xargs -I{} dotnet test {} -c Release --filter Category!=e2e"
   }
 }
