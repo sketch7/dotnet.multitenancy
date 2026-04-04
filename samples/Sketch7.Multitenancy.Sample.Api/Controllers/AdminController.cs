@@ -1,20 +1,21 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
+using Sketch7.Multitenancy;
+using Sketch7.Multitenancy.Sample.Api.Tenancy;
 
-namespace Sketch7.Multitenancy.Sample.Api.Controllers
+namespace Sketch7.Multitenancy.Sample.Api.Controllers;
+
+[Route("api/[controller]")]
+[ApiController]
+public class AdminController : ControllerBase
 {
-	[Route("api/[controller]")]
-	[ApiController]
-	public class AdminController : Controller
+	private readonly ITenantAccessor<AppTenant> _tenantAccessor;
+
+	public AdminController(ITenantAccessor<AppTenant> tenantAccessor)
 	{
-		private readonly ITenant _tenant;
-
-		public AdminController(ITenant tenant)
-		{
-			_tenant = tenant;
-		}
-
-		// GET api/admin/tenant
-		[HttpGet("tenant")]
-		public ITenant GetTenant() => _tenant;
+		_tenantAccessor = tenantAccessor;
 	}
+
+	// GET api/admin/tenant
+	[HttpGet("tenant")]
+	public AppTenant? GetTenant() => _tenantAccessor.Tenant;
 }

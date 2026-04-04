@@ -1,26 +1,20 @@
-﻿using System;
-using System.Collections.Generic;
+namespace Sketch7.Multitenancy.Sample.Api.Heroes;
 
-namespace Sketch7.Multitenancy.Sample.Api.Heroes
-{
-	// singleton service shared across tenants 
+// singleton service shared across tenants
 public interface IDataClientManager
 {
-	IDataClientManager Register(object type);
+	IDataClientManager Register(object instance);
 }
 
 public class DataClientManager : IDataClientManager, IDisposable
 {
-	private readonly HashSet<object> _instances = new HashSet<object>();
+	private readonly HashSet<object> _instances = [];
 
-	public IDataClientManager Register(object type)
+	public IDataClientManager Register(object instance)
 	{
-		_instances.Add(type);
+		_instances.Add(instance);
 		return this;
 	}
 
-	public void Dispose()
-	{
-	}
-}
+	public void Dispose() { }
 }

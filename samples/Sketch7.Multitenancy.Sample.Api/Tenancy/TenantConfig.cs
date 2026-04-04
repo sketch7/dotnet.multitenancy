@@ -1,30 +1,29 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 
-namespace Sketch7.Multitenancy.Sample.Api.Tenancy
+namespace Sketch7.Multitenancy.Sample.Api.Tenancy;
+
+[DebuggerDisplay("{DebuggerDisplay,nq}")]
+public class AppTenantConfig
 {
-	[DebuggerDisplay("{DebuggerDisplay,nq}")]
-	public class AppTenantConfig
-	{
-		protected string DebuggerDisplay => $"Id: '{Id}', Name: '{Name}', IsDisabled: {IsDisabled}, Organization: {Organization}";
+	protected string DebuggerDisplay => $"Id: '{Id}', Name: '{Name}', IsDisabled: {IsDisabled}, Organization: {Organization}";
 
-		/// <summary>
-		/// Gets or sets the brand id e.g. 'loki'.
-		/// </summary>
-		public string Id { get; set; }
+	/// <summary>
+	/// Gets or sets the tenant id e.g. 'lol'.
+	/// </summary>
+	public string Id { get; set; } = default!;
 
-		/// <summary>
-		/// Gets or sets the brand name e.g. 'Loki'.
-		/// </summary>
-		public string Name { get; set; }
+	/// <summary>
+	/// Gets or sets the tenant name e.g. 'League of Legends'.
+	/// </summary>
+	public string Name { get; set; } = default!;
 
-		/// <summary>
-		/// Gets or sets whether the brand is disabled or not.
-		/// </summary>
-		public bool IsDisabled { get; set; }
+	/// <summary>
+	/// Gets or sets whether the tenant is disabled.
+	/// </summary>
+	public bool IsDisabled { get; set; }
 
-		/// <summary>
-		/// Gets or sets the organization e.g. 'cpm'.
-		/// </summary>
-		public string Organization { get; set; }
-	}
+	/// <summary>
+	/// Gets or sets the organization e.g. 'riot'.
+	/// </summary>
+	public string Organization { get; set; } = default!;
 }

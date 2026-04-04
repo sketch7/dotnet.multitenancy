@@ -1,13 +1,12 @@
-﻿namespace Sketch7.Multitenancy
+namespace Sketch7.Multitenancy;
+
+/// <summary>
+/// Interface to mark as Tenant.
+/// </summary>
+public interface ITenant
 {
 	/// <summary>
-	/// Interface to mark as Tenant.
+	/// Gets the tenant key.
 	/// </summary>
-	public interface ITenant
-	{
-		/// <summary>
-		/// Gets the tenant key.
-		/// </summary>
-		string Key { get; }
-	}
+	string Key { get; }
 }

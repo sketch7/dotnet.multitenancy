@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Description>ASP.NET Core middleware and integration for multitenancy.</Description>
+    <PackageTags>$(PackageTags) aspnet middleware</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Sketch7.Multitenancy\Sketch7.Multitenancy.csproj" />
+  </ItemGroup>
+
+</Project>
