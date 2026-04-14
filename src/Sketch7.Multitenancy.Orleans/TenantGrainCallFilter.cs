@@ -69,4 +69,3 @@ public interface IHasTenantAccessor<TTenant>
 	/// </summary>
 	TenantAccessor<TTenant> TenantAccessor { get; }
 }
-

@@ -2,28 +2,19 @@ using System.Diagnostics;
 
 namespace Sketch7.Multitenancy.Sample.Api.Tenancy;
 
-[DebuggerDisplay("{DebuggerDisplay,nq}")]
-public class AppTenantConfig
+/// <summary>Represents a tenant configuration entry.</summary>
+[DebuggerDisplay("Id: '{Id}', Name: '{Name}', IsDisabled: {IsDisabled}, Organization: {Organization}")]
+public record AppTenantConfig
 {
-	protected string DebuggerDisplay => $"Id: '{Id}', Name: '{Name}', IsDisabled: {IsDisabled}, Organization: {Organization}";
+	/// <summary>Gets the tenant id e.g. <c>lol</c>.</summary>
+	public string Id { get; init; } = default!;
 
-	/// <summary>
-	/// Gets or sets the tenant id e.g. 'lol'.
-	/// </summary>
-	public string Id { get; set; } = default!;
+	/// <summary>Gets the tenant name e.g. <c>League of Legends</c>.</summary>
+	public string Name { get; init; } = default!;
 
-	/// <summary>
-	/// Gets or sets the tenant name e.g. 'League of Legends'.
-	/// </summary>
-	public string Name { get; set; } = default!;
+	/// <summary>Gets whether the tenant is disabled.</summary>
+	public bool IsDisabled { get; init; }
 
-	/// <summary>
-	/// Gets or sets whether the tenant is disabled.
-	/// </summary>
-	public bool IsDisabled { get; set; }
-
-	/// <summary>
-	/// Gets or sets the organization e.g. 'riot'.
-	/// </summary>
-	public string Organization { get; set; } = default!;
+	/// <summary>Gets the organization e.g. <c>riot</c>.</summary>
+	public string Organization { get; init; } = default!;
 }

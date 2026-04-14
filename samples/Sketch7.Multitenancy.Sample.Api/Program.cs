@@ -3,8 +3,8 @@ using Sketch7.Multitenancy;
 using Sketch7.Multitenancy.AspNet;
 using Sketch7.Multitenancy.Orleans;
 using Sketch7.Multitenancy.Sample.Api.Heroes;
-using Sketch7.Multitenancy.Sample.Api.Tenant;
 using Sketch7.Multitenancy.Sample.Api.Tenancy;
+using Sketch7.Multitenancy.Sample.Api.Tenant;
 using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
