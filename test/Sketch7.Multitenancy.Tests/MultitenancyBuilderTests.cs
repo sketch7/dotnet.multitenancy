@@ -1,6 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
-using Sketch7.Multitenancy;
 using Xunit;
 
 namespace Sketch7.Multitenancy.Tests;

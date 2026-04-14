@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Http;
 using Sketch7.Multitenancy.AspNet;
 
 namespace Sketch7.Multitenancy.Sample.Api.Tenancy;

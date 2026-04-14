@@ -1,4 +1,3 @@
-using Orleans.Concurrency;
 using Sketch7.Multitenancy.Orleans;
 
 namespace Sketch7.Multitenancy.Sample.Api.Heroes;

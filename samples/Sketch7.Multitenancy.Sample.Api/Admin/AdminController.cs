@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-using Sketch7.Multitenancy;
 using Sketch7.Multitenancy.Sample.Api.Tenancy;
 
 namespace Sketch7.Multitenancy.Sample.Api.Admin;
