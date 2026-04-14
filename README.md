@@ -1,14 +1,8 @@
-[projectUri]: https://github.com/sketch7/dotnet.multitenancy
-[changeLog]: ./CHANGELOG.md
-
 # Dotnet Multitenancy
-[![CircleCI](https://circleci.com/gh/sketch7/dotnet.multitenancy.svg?style=shield)](https://circleci.com/gh/sketch7/dotnet.multitenancy)
+[![CI](https://github.com/sketch7/dotnet.multitenancy/actions/workflows/ci.yml/badge.svg)](https://github.com/sketch7/dotnet.multitenancy/actions/workflows/ci.yml)
+[![NuGet](https://img.shields.io/nuget/v/Sketch7.Multitenancy.svg)](https://www.nuget.org/packages/Sketch7.Multitenancy)
 
 Multi-tenancy library for .NET 10 using native Microsoft DI keyed services — no third-party containers required.
-
-**Quick links**
-
-[Change logs][changeLog] | [Project Repository][projectUri]
 
 ## Features
 
