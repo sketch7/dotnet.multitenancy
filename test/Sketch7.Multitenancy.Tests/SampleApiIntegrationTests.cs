@@ -27,7 +27,7 @@ public class SampleApiIntegrationTests : IClassFixture<WebApplicationFactory<Pro
 		client.DefaultRequestHeaders.Add("X-SSV-Tenant", "lol");
 
 		// Act
-		var response = await client.GetAsync("/api/admin/tenant");
+		var response = await client.GetAsync("/api/tenants/current");
 
 		// Assert
 		response.StatusCode.ShouldBe(HttpStatusCode.OK);
@@ -45,7 +45,7 @@ public class SampleApiIntegrationTests : IClassFixture<WebApplicationFactory<Pro
 		client.DefaultRequestHeaders.Add("X-SSV-Tenant", "hots");
 
 		// Act
-		var response = await client.GetAsync("/api/admin/tenant");
+		var response = await client.GetAsync("/api/tenants/current");
 
 		// Assert
 		response.StatusCode.ShouldBe(HttpStatusCode.OK);
@@ -63,7 +63,7 @@ public class SampleApiIntegrationTests : IClassFixture<WebApplicationFactory<Pro
 		// No X-SSV-Tenant header
 
 		// Act
-		var response = await client.GetAsync("/api/admin/tenant");
+		var response = await client.GetAsync("/api/tenants/current");
 
 		// Assert
 		response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);

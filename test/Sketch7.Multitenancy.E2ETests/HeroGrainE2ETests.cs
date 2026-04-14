@@ -107,7 +107,7 @@ public class HeroGrainE2ETests : IClassFixture<AspireFixture>
 		using var client = _app.CreateHttpClient("sample-api");
 		client.DefaultRequestHeaders.Add("X-SSV-Tenant", "lol");
 
-		var response = await client.GetAsync("/api/admin/tenant");
+		var response = await client.GetAsync("/api/tenants/current");
 
 		response.StatusCode.ShouldBe(HttpStatusCode.OK);
 		var tenant = await response.Content.ReadFromJsonAsync<TenantDto>();

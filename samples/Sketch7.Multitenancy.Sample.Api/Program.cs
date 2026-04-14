@@ -1,7 +1,9 @@
+using Scalar.AspNetCore;
 using Sketch7.Multitenancy;
 using Sketch7.Multitenancy.AspNet;
 using Sketch7.Multitenancy.Orleans;
 using Sketch7.Multitenancy.Sample.Api.Heroes;
+using Sketch7.Multitenancy.Sample.Api.Tenant;
 using Sketch7.Multitenancy.Sample.Api.Tenancy;
 using StackExchange.Redis;
 
@@ -26,8 +28,7 @@ builder.Services
 	.ForTenants(t => t.Organization == OrganizationNames.Blizzard,
 		s => s.AddScoped<IHeroDataClient, MockHotsHeroDataClient>());
 
-builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddOpenApi();
 
 // Configure Orleans silo (co-hosted in same process as the ASP.NET Core app).
 // When Aspire provides a "redis" connection string, use Redis for clustering and grain persistence.
@@ -54,7 +55,10 @@ builder.Host.UseOrleans(silo =>
 var app = builder.Build();
 
 app.MapDefaultEndpoints();
+app.MapOpenApi();
+app.MapScalarApiReference();
 app.UseMultitenancy<AppTenant>();
-app.MapControllers();
+app.MapTenantEndpoints();
+app.MapHeroesEndpoints();
 
 app.Run();
