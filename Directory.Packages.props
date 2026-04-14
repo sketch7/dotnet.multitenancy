@@ -9,9 +9,16 @@
     <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="10.4.0" />
     <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery" Version="10.4.0" />
   </ItemGroup>
+  <ItemGroup Label="Aspire">
+    <PackageVersion Include="Aspire.Hosting.Redis" Version="13.2.2" />
+    <PackageVersion Include="Aspire.Hosting.Testing" Version="13.2.2" />
+  </ItemGroup>
   <ItemGroup Label="Orleans">
     <PackageVersion Include="Microsoft.Orleans.Core.Abstractions" Version="10.0.1" />
     <PackageVersion Include="Microsoft.Orleans.Runtime" Version="10.0.1" />
+    <PackageVersion Include="Microsoft.Orleans.Server" Version="10.0.1" />
+    <PackageVersion Include="Microsoft.Orleans.Clustering.Redis" Version="10.0.1" />
+    <PackageVersion Include="Microsoft.Orleans.Persistence.Redis" Version="10.0.1" />
   </ItemGroup>
   <ItemGroup Label="OpenTelemetry">
     <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.15.2" />

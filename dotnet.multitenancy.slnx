@@ -15,6 +15,7 @@
 	</Folder>
 	<Folder Name="/test/">
 		<Project Path="test/Sketch7.Multitenancy.Tests/Sketch7.Multitenancy.Tests.csproj" />
+		<Project Path="test/Sketch7.Multitenancy.E2ETests/Sketch7.Multitenancy.E2ETests.csproj" />
 	</Folder>
 	<Folder Name="/tools/">
 		<File Path=".editorconfig" />
