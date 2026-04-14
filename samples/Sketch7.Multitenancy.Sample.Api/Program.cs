@@ -1,18 +1,36 @@
-﻿using Microsoft.AspNetCore;
-using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Hosting;
+using Sketch7.Multitenancy;
+using Sketch7.Multitenancy.AspNet;
+using Sketch7.Multitenancy.Sample.Api.Heroes;
+using Sketch7.Multitenancy.Sample.Api.Tenancy;
 
-namespace Sketch7.Multitenancy.Sample.Api
-{
-	public class Program
-	{
-		public static void Main(string[] args)
-		{
-			CreateWebHostBuilder(args).Build().Run();
-		}
+var builder = WebApplication.CreateBuilder(args);
 
-		public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
-			WebHost.CreateDefaultBuilder(args)
-				.UseUrls("http://localhost:5500/")
-				.UseStartup<Startup>();
-	}
-}
+builder.AddServiceDefaults();
+
+// Create the tenant registry early so we can use it for predicate-based per-tenant registration
+var tenantRegistry = new AppTenantRegistry();
+
+builder.Services
+	.AddSingleton<IAppTenantRegistry>(tenantRegistry)
+	.AddSingleton<IDataClientManager, DataClientManager>();
+
+builder.Services
+	.AddMultitenancy<AppTenant>()
+	.WithHttpResolver<AppTenant, AppTenantHttpResolver>()
+	.WithTenants(tenantRegistry.GetAll())
+	.ForTenants(t => t.Organization == OrganizationNames.Riot,
+		s => s.AddScoped<IHeroDataClient, MockLoLHeroDataClient>())
+	.ForTenants(t => t.Organization == OrganizationNames.Blizzard,
+		s => s.AddScoped<IHeroDataClient, MockHotsHeroDataClient>());
+
+builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+
+var app = builder.Build();
+
+app.MapDefaultEndpoints();
+app.UseMultitenancy<AppTenant>();
+app.MapControllers();
+
+app.Run();

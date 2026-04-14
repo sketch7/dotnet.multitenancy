@@ -1,0 +1,28 @@
+<Solution>
+	<Folder Name="/docs/">
+		<File Path="CHANGELOG.md" />
+		<File Path="README.md" />
+	</Folder>
+	<Folder Name="/samples/">
+		<Project Path="samples/Sketch7.Multitenancy.Sample.Api/Sketch7.Multitenancy.Sample.Api.csproj" />
+		<Project Path="samples/Sketch7.Multitenancy.AppHost/Sketch7.Multitenancy.AppHost.csproj" />
+		<Project Path="samples/Sketch7.Multitenancy.ServiceDefaults/Sketch7.Multitenancy.ServiceDefaults.csproj" />
+	</Folder>
+	<Folder Name="/src/">
+		<Project Path="src/Sketch7.Multitenancy.AspNet/Sketch7.Multitenancy.AspNet.csproj" />
+		<Project Path="src/Sketch7.Multitenancy.Orleans/Sketch7.Multitenancy.Orleans.csproj" />
+		<Project Path="src/Sketch7.Multitenancy/Sketch7.Multitenancy.csproj" />
+	</Folder>
+	<Folder Name="/test/">
+		<Project Path="test/Sketch7.Multitenancy.Tests/Sketch7.Multitenancy.Tests.csproj" />
+	</Folder>
+	<Folder Name="/tools/">
+		<File Path=".editorconfig" />
+		<File Path=".gitignore" />
+		<File Path="Directory.Build.props" />
+		<File Path="Directory.Packages.props" />
+		<File Path="NuGet.Config" />
+		<File Path="package.json" />
+		<File Path="tools/pack.sh" />
+	</Folder>
+</Solution>
