@@ -1,6 +1,6 @@
 ---
 name: orleans-best-practices
-description: "Microsoft Orleans best practices for this codebase. Use when writing or reviewing grain interfaces, grain implementations, serialization attributes, concurrency attributes, grain key strategies, storage providers, or GrainFactory extension methods. Use for [Immutable], [return: Immutable], [GenerateSerializer], [AlwaysInterleave], [OneWay], [StatelessWorker], [Reentrant], [SharedTenant], ArcaneGrain base class selection, IPersistentState injection, PersistentState attribute, StorageProvider naming, and partial GrainExtensions patterns."
+description: "Microsoft Orleans best practices for this codebase. Use when writing or reviewing grain interfaces, grain implementations, serialization attributes, concurrency attributes, grain key strategies, storage providers, or tenant-scoped grain patterns. Use for [Immutable], [return: Immutable], [GenerateSerializer], [AlwaysInterleave], [OneWay], [StatelessWorker], [Reentrant], ITenantGrain, IHasTenantAccessor, TenantGrainKey, and StorageProvider patterns."
 ---
 
 # Orleans Best Practices
@@ -12,7 +12,7 @@ description: "Microsoft Orleans best practices for this codebase. Use when writi
 - Choosing a grain key type
 - Selecting a grain base class
 - Adding state persistence to a grain
-- Registering grains across tenants
+- Making a grain tenant-aware
 
 ---
 
@@ -27,20 +27,13 @@ This tells Orleans the caller guarantees the object won't be mutated — Orleans
 ### On grain interfaces
 
 ```csharp
-public interface IStoreOpWorkerGrain<TCrudModel> : IArcaneGrainContract, IGrainWithIntegerKey
-    where TCrudModel : IArcaneEntity
+public interface IHeroGrain : IGrainWithStringKey, ITenantGrain
 {
     [return: Immutable]
-    Task<List<TCrudModel>> CreateMany(
-        [Immutable] List<TCrudModel> input,
-        ActionSource actionSource,
-        [Immutable] CrudContext? ctx = null);
+    Task<List<Hero>> GetAllAsync();
 
     [return: Immutable]
-    Task<List<TCrudModel>> UpdateMany(
-        [Immutable] List<UpdateManyRequest<TCrudModel>> updates,
-        ActionSource actionSource,
-        [Immutable] CrudContext? ctx = null);
+    Task<Hero?> GetByKeyAsync(string heroKey);
 }
 ```
 
@@ -48,33 +41,27 @@ public interface IStoreOpWorkerGrain<TCrudModel> : IArcaneGrainContract, IGrainW
 
 - Use `[Immutable]` / `[return: Immutable]` on the **interface**, not the implementation
 - The implementation omits the `[Immutable]` attribute; it receives the unwrapped type
-- Scalar types (`string`, `int`, `bool`, `ActionSource`, enums) do **not** need `[Immutable]`
-- `CrudContext?` always uses `[Immutable] CrudContext?` — **not** the `Immutable<T>` wrapper
-- ❌ Avoid the `Immutable<T>` struct wrapper (`Immutable<CrudContext>`, `Immutable<TCrudModel>`) — it changes the public API type and leaks Orleans internals into the interface signature. Prefer the attribute form at all times
+- Scalar types (`string`, `int`, `bool`, enums) do **not** need `[Immutable]`
+- ❌ Avoid the `Immutable<T>` struct wrapper — it changes the public API type and leaks Orleans internals into the interface signature. Prefer the attribute form at all times
 
 ---
 
 ## 2. Serialization — `[GenerateSerializer]` and `[Id(n)]`
 
-All types sent over grain calls, stored in grain state, or streamed through Orleans must have Orleans serialization attributes.
+All types sent over grain calls or stored in grain state must have Orleans serialization attributes.
 
 ```csharp
 [GenerateSerializer]
-public class TransactionCoordinatorGrainState
+public class HeroGrainState
 {
     [Id(0)]
-    public Dictionary<string, CrudGrainReference> GrainRefs { get; set; } = new();
-
-    [Id(1)]
-    public CrudTransactionStatus Status { get; set; } = CrudTransactionStatus.Inactive;
+    public List<Hero> Heroes { get; set; } = [];
 }
 
 [GenerateSerializer]
-public record ReactiveResult<TModel>(
-    [property: Id(0)] TModel? Model,
-    [property: Id(1)] TimeSpan? TimeToLive,
-    [property: Id(2)] Guid VersionToken,
-    [property: Id(3)] bool IsFaulted = false
+public record MyResult(
+    [property: Id(0)] string Value,
+    [property: Id(1)] bool IsValid
 );
 ```
 
@@ -94,13 +81,11 @@ public record ReactiveResult<TModel>(
 Bypasses the grain's single-threaded turn-based execution. Use for reads that do NOT mutate grain state:
 
 ```csharp
-public interface ICrudGrain<TCrudModel> : ICrudGrain
+public interface IHeroGrain : IGrainWithStringKey, ITenantGrain
 {
     [AlwaysInterleave]
-    ValueTask<Immutable<TCrudModel?>> Get(bool includeArchived, Immutable<CrudContext>? ctx = null);
-
-    [AlwaysInterleave]
-    Task<List<TResult>> GetAll();
+    [return: Immutable]
+    Task<List<Hero>> GetAllAsync();
 }
 ```
 
@@ -110,20 +95,16 @@ No return value expected (Orleans won't wait for completion). Use for notificati
 
 ```csharp
 [OneWay]
-Task SetOneWay(Immutable<TCrudModel> input, ArcaneMessageActionType actionType,
-    ActionSource actionSource = ActionSource.Client, Immutable<CrudContext>? ctx = null);
-
-[OneWay]
-Task ActivateOneWay();  // defined in IArcaneGrainContract
+Task NotifyUpdateAsync(string heroKey);
 ```
 
 ### `[Reentrant]` — on the grain class, not the interface
 
-Allows the grain to process new messages while awaiting async operations. Use on reactive/streaming grains:
+Allows the grain to process new messages while awaiting async operations:
 
 ```csharp
 [Reentrant]
-public abstract class ArcaneReactiveGrain<TState> : ArcaneGrain(...)
+public class MyGrain : Grain, IMyGrain { }
 ```
 
 > ⚠️ Never use `[Reentrant]` on grains with mutable state that require strict ordering.
@@ -133,9 +114,9 @@ public abstract class ArcaneReactiveGrain<TState> : ArcaneGrain(...)
 Any number of instances can be created per silo. No per-grain state. Use for CPU/IO work that scales out:
 
 ```csharp
-[StatelessWorker]              // unlimited instances
-[StatelessWorker(1)]           // 1 instance per silo (bounded)
-public class StoreOpWorkerGrain<TCrudModel> : ArcaneGrain, IStoreOpWorkerGrain<TCrudModel>
+[StatelessWorker]      // unlimited instances
+[StatelessWorker(1)]   // 1 instance per silo (bounded)
+public class WorkerGrain : Grain, IWorkerGrain { }
 ```
 
 ---
@@ -145,250 +126,165 @@ public class StoreOpWorkerGrain<TCrudModel> : ArcaneGrain, IStoreOpWorkerGrain<T
 | Key Type | `IGrainWithXxxKey`     | When to Use                                                       |
 | -------- | ---------------------- | ----------------------------------------------------------------- |
 | Integer  | `IGrainWithIntegerKey` | Singleton or small cardinality; use `0` for the default singleton |
-| String   | `IGrainWithStringKey`  | Per-entity (entity ID), per-session, or semantic composite keys   |
-| GUID     | `IGrainWithGuidKey`    | Not used in this codebase                                         |
+| String   | `IGrainWithStringKey`  | Per-entity, per-tenant, or semantic composite keys                |
+| GUID     | `IGrainWithGuidKey`    | Globally unique instance identity                                 |
+
+### Tenant-scoped String Keys
+
+For tenant-aware grains use `TenantGrainKey.Create(tenantKey, grainKey)`. The format is `{tenantKey}/{grainKey}`.
 
 ```csharp
-// Singleton worker — always key 0
-public interface IStoreOpWorkerGrain<TCrudModel> : IArcaneGrainContract, IGrainWithIntegerKey
+// Creating a key
+var key = TenantGrainKey.Create("tenant-a", "heroes");
+// → "tenant-a/heroes"
 
-// Per-entity grain — key = entity ID string
-public interface ICrudGrain<TCrudModel> : ICrudGrain  // inherits IGrainWithStringKey
+// Resolving a grain
+grainFactory.GetGrain<IHeroGrain>(TenantGrainKey.Create(tenantKey, "heroes"));
 
-// Composite string key with semantic prefix
-factory.GetGrain<IBrandClusterInitializerGrain>($"brand/{brandId}");
-```
+// Parsing inside a grain
+var primaryKey = this.GetPrimaryKeyString();
+var tenantKey = TenantGrainKey.GetTenantKey(primaryKey);  // throws FormatException on bad format
+var grainKey  = TenantGrainKey.GetGrainKey(primaryKey);
 
-### Structured Key Pattern (`record struct` + `ParseKey`)
-
-When a string key encodes multiple values (e.g. a service key, tenant, resource type), define a `record struct` to hold the structured data with a `Template` constant and a `Create` factory method. The grain parses its own key via `this.ParseKey<TKey>(template)` in the constructor.
-
-```csharp
-// Key type — define next to the grain, in the same file
-public record struct TopicKey
+// Safe parsing (non-middleware code)
+if (TenantGrainKey.TryParse(primaryKey, out var tenantKey, out var grainKey))
 {
-    public static readonly string Template = "arcaneMessagingTopics/{serviceKey}";
-
-    public static string Create(string serviceKey)
-        => Template.FromTemplate(new Dictionary<string, object?> { ["serviceKey"] = serviceKey });
-
-    public string ServiceKey { get; set; }
-}
-
-// Grain — parse itself using the same template
-public class TopicGrain : ArcaneGrain, ITopicGrain
-{
-    private readonly TopicKey _keyData;
-
-    public TopicGrain(...) : base(logger, loggingContext)
-    {
-        _keyData = this.ParseKey<TopicKey>(TopicKey.Template);
-        // now use _keyData.ServiceKey, etc.
-    }
+    // use tenantKey and grainKey
 }
 ```
 
 ### Rules
 
-- `Template` uses `{paramName}` placeholders; `Create(...)` calls `FromTemplate` to fill them
-- `ParseKey<T>` is called once in the constructor — never in hot paths
-- Every grain with a structured key **must** have a corresponding `IGrainFactory` extension accessor (see section 8)
+- Always use `TenantGrainKey.Create(...)` to build tenant-scoped keys — never concatenate manually
+- Parse via `TenantGrainKey.GetTenantKey` / `GetGrainKey` (throws) or `TryParse` (safe) — never split on `/` manually
+- Prefer `TryParse` in grain logic; reserve the throwing overloads for middleware/filters where an invalid key is always a bug
 
 ---
 
 ## 5. Base Class Selection
 
-| Class         | State | Use When                                                                                    |
-| ------------- | ----- | ------------------------------------------------------------------------------------------- |
-| `ArcaneGrain` | None  | All grains — stateless workers, coordinators, and stateful grains via `IPersistentState<T>` |
+Use standard Orleans base classes:
 
-Always extend `ArcaneGrain` and inject `IPersistentState<TState>` for persistence (see section 6). All grain classes provide: `ILogger Logger`, `ILoggingContext LoggingContext`, `string PrimaryKey`, `RegisterTimer(...)`, `OnArcaneActivate()` lifecycle hook.
+| Class           | State    | Use When                                                    |
+| --------------- | -------- | ----------------------------------------------------------- |
+| `Grain`         | None     | Stateless grains or grains that manage their own state      |
+| `Grain<TState>` | Built-in | Grains with simple persistent state via `[StorageProvider]` |
 
-> ❌ **Legacy** — `ArcaneGrain<TState>` (backed by `Grain<TState>`) + `[StorageProvider]` class attribute is the deprecated Orleans approach. Do not use for new grains.
+```csharp
+// Stateless grain
+public class WorkerGrain : Grain, IWorkerGrain { }
+
+// Stateful grain
+[StorageProvider(ProviderName = "heroes")]
+public sealed class HeroGrain : Grain<HeroGrainState>, IHeroGrain { }
+```
 
 ---
 
 ## 6. Grain Persistence
 
-### Preferred — `IPersistentState<TState>` constructor injection
-
-Inject `IPersistentState<TState>` into the constructor and annotate the parameter with `[PersistentState("stateName", "providerName")]`. Extend `ArcaneGrain` (not `ArcaneGrain<TState>`).
+Use `Grain<TState>` with `[StorageProvider(ProviderName = "providerName")]` on the grain class. The state is accessible via `State` and persisted via `WriteStateAsync()`.
 
 ```csharp
-public class MyGrain : ArcaneGrain, IMyGrain
+[StorageProvider(ProviderName = "heroes")]
+public sealed class HeroGrain : Grain<HeroGrainState>, IHeroGrain, IHasTenantAccessor<AppTenant>
 {
-    private readonly IPersistentState<MyGrainState> _state;
+    // State is loaded before OnActivateAsync() — safe to read in any method
+    public Task<List<Hero>> GetAllAsync() => Task.FromResult(State.Heroes);
 
-    public MyGrain(
-        ILogger<MyGrain> logger,
-        ILoggingContext loggingContext,
-        [PersistentState("myState", OrleansStoreNames.Crud)]
-        IPersistentState<MyGrainState> state
-    ) : base(logger, loggingContext)
+    public async Task SetHeroesAsync(List<Hero> heroes)
     {
-        _state = state;
-    }
-
-    // State is NOT yet loaded at constructor time — only after OnArcaneActivate()
-    public Task<string> GetNameAsync() => Task.FromResult(_state.State.Name);
-
-    public async Task SetNameAsync(string name)
-    {
-        _state.State.Name = name;
-        await _state.WriteStateAsync();
-    }
-}
-```
-
-### Store name constants
-
-| Constant                             | Purpose                                                                        |
-| ------------------------------------ | ------------------------------------------------------------------------------ |
-| `OrleansStoreNames.Crud`             | Persist CRUD entity state (CrudGrain, TransactionCoordinatorGrain, StoreGrain) |
-| `OrleansStoreNames.GrainPersistence` | General-purpose grain state (auth tokens, health checks, service context)      |
-
-### Dynamic storage name — `IPersistentStateFactory`
-
-When the provider name comes from runtime configuration (e.g. per-service options), use `IPersistentStateFactory` instead of the `[PersistentState]` attribute:
-
-```csharp
-public class TopicGrain : ArcaneGrain, ITopicGrain
-{
-    private readonly IPersistentState<TopicGrainState> _store;
-
-    public TopicGrain(
-        ILogger<TopicGrain> logger,
-        ILoggingContext loggingContext,
-        IPersistentStateFactory persistentStateFactory,
-        IGrainContext grainContext,
-        IOptionsMonitor<ArcaneMessagingKafkaOptions> optionsMonitor
-    ) : base(logger, loggingContext)
-    {
-        var options = optionsMonitor.Get(_keyData.ServiceKey);
-        _store = persistentStateFactory.Create<TopicGrainState>(
-            grainContext,
-            new PersistentStateAttribute("topic", options.StoreName)
-        );
+        State.Heroes = heroes;
+        await WriteStateAsync();
     }
 }
 ```
 
 ### Rules
 
-- ✅ Use `IPersistentState<TState>` + `[PersistentState("name", OrleansStoreNames.Xxx)]` on the constructor parameter
-- ✅ Only access `_state.State` **after** activation (state is not loaded in the constructor)
-- ✅ Use `IPersistentStateFactory` when the storage provider name is determined at runtime
-- ❌ Do **not** use `[StorageProvider(ProviderName = ...)]` on the grain class — this is the legacy `Grain<TState>` pattern and is deprecated in Orleans 10
-- ❌ Do **not** extend `ArcaneGrain<TState>` for new grains — prefer `ArcaneGrain` + injected `IPersistentState<T>`
+- `State` is loaded before `OnActivateAsync()` — safe to read immediately
+- Always call `WriteStateAsync()` after mutating `State`
+- Provider names are configured in the silo builder (e.g. `siloBuilder.AddMemoryGrainStorage("heroes")`)
 
 ---
 
-## 7. `[SharedTenant]` — Cross-Tenant Grains
+## 7. Tenant-Aware Grains
 
-By default all grains are tenant-scoped. Grains shared across all tenants (messaging infrastructure, cluster coordination, Kafka topics) must be decorated with `[SharedTenant]`:
+### `ITenantGrain`
+
+Implement `ITenantGrain` on any grain whose primary key embeds a tenant key. Provides `GetTenantKeyAsync()`:
 
 ```csharp
-[SharedTenant]
-public class StoreGrain : ArcaneGrain<StoreGrainState>, IStoreGrain
-
-[SharedTenant]
-public class ProducerGrain : ArcaneGrain, IProducerGrain
-
-[SharedTenant]
-public class TransactionCoordinatorGrain : ArcaneGrain<TransactionCoordinatorGrainState>, ITransactionCoordinatorGrain
+public interface IHeroGrain : IGrainWithStringKey, ITenantGrain
+{
+    [return: Immutable]
+    Task<List<Hero>> GetAllAsync();
+}
 ```
 
-> ⚠️ Never add `[SharedTenant]` to entity-level grains (CrudGrain, etc.) — they must remain tenant-isolated.
+### `IHasTenantAccessor<TTenant>` — receiving tenant context from the call filter
+
+The `TenantGrainCallFilter<TTenant>` automatically populates the grain's `TenantAccessor.Tenant` before each call — but only when the grain implements `IHasTenantAccessor<TTenant>`. Add a public auto-property of type `TenantAccessor<TTenant>` to opt in:
+
+```csharp
+[StorageProvider(ProviderName = "heroes")]
+public sealed class HeroGrain : Grain<HeroGrainState>, IHeroGrain, IHasTenantAccessor<AppTenant>
+{
+    /// <inheritdoc />
+    public TenantAccessor<AppTenant> TenantAccessor { get; } = new();
+
+    /// <inheritdoc />
+    public Task<string> GetTenantKeyAsync() =>
+        Task.FromResult(TenantGrainKey.GetTenantKey(this.GetPrimaryKeyString()));
+}
+```
+
+### Propagating tenant into a DI scope
+
+When a grain needs to resolve scoped, tenant-aware services (e.g. to call an `IHeroDataClient` proxy), create a new scope and copy the tenant from the grain's accessor:
+
+```csharp
+private readonly IServiceScopeFactory _scopeFactory;
+
+private async Task EnsureHeroesAsync()
+{
+    using var scope = _scopeFactory.CreateScope();
+
+    // Propagate the current tenant into the new scope
+    var accessor = scope.ServiceProvider.GetRequiredService<TenantAccessor<AppTenant>>();
+    accessor.Tenant = TenantAccessor.Tenant;
+
+    var dataClient = scope.ServiceProvider.GetRequiredService<IHeroDataClient>();
+    State.Heroes = await dataClient.GetAll();
+    await WriteStateAsync();
+}
+```
 
 ---
 
-## 8. GrainFactory Extensions (Partial Class Pattern)
+## 8. Silo Registration
 
-Every grain **must** have a typed extension accessor on `IGrainFactory`. This hides key construction behind a named method, prevents callers from hard-coding key strings, and enforces consistency.
-
-All accessors live in `public static partial class GrainExtensions`, split by domain across multiple files. Always use C# 14 `extension` blocks — never the old `this` parameter style.
+Register the call filter via `UseMultitenancy<TTenant>()` on the silo builder. Place this alongside other silo configuration:
 
 ```csharp
-// ✅ Correct — C# 14 extension block
-// src/Arcane.Orleans.DataStore/GrainExtensions.cs
-public static partial class GrainExtensions
-{
-    extension(IGrainFactory grainFactory)
-    {
-        // Entity grain — key is the entity ID
-        public ICrudGrain<TCrudModel> GetCrudGrain<TCrudModel>(string id)
-            where TCrudModel : ArcaneCrudModel
-            => grainFactory.GetGrain<ICrudGrain<TCrudModel>>(id);
-
-        // Singleton grain — always key 0
-        public IStoreOpWorkerGrain<TCrudModel> GetStoreOpWorkerGrain<TCrudModel>()
-            where TCrudModel : ArcaneCrudModel
-            => grainFactory.GetGrain<IStoreOpWorkerGrain<TCrudModel>>(0);
-
-        // Structured key grain — key built via the key type's Create()
-        public ITopicGrain GetTopicGrain(string serviceKey)
-            => grainFactory.GetGrain<ITopicGrain>(TopicKey.Create(serviceKey));
-    }
-}
-
-// ❌ Old style — do not use
-public static class GrainExtensions
-{
-    public static ITopicGrain GetTopicGrain(this IGrainFactory factory, string serviceKey)
-        => factory.GetGrain<ITopicGrain>(TopicKey.Create(serviceKey));
-}
+siloBuilder.UseMultitenancy<AppTenant>();
 ```
 
-Accessors may be co-located with the grain file (inline `partial class`) instead of a separate `GrainExtensions.cs` when the grain is self-contained:
-
-```csharp
-// src/Arcane.Messaging.Kafka/TopicGrain.cs
-public static partial class GrainExtensions
-{
-    extension(IGrainFactory grainFactory)
-    {
-        public ITopicGrain GetTopicGrain(string serviceKey)
-            => grainFactory.GetGrain<ITopicGrain>(TopicKey.Create(serviceKey));
-    }
-}
-```
-
-### Rules
-
-- Every grain **must** have an extension accessor — callers must never call `GetGrain<T>(key)` directly
-- Always use C# 14 `extension` blocks (not old `this` parameter style)
-- One `partial class GrainExtensions` per feature file or domain file — never a monolithic file
-- Singleton grains use key `0`; entity grains use the entity ID; structured-key grains use `KeyType.Create(...)`
-
----
-
-## 9. `IArcaneGrainContract` — Required Interface Members
-
-Every grain interface must extend `IArcaneGrainContract`, which provides:
-
-```csharp
-Task Activate();       // warm-up / pre-load
-
-[OneWay]
-Task ActivateOneWay(); // fire-and-forget warm-up
-```
-
-These are implemented in the `ArcaneGrain` base class — no need to implement them in concrete grains.
+This registers `TenantGrainCallFilter<TTenant>` as a singleton `IIncomingGrainCallFilter`. It automatically extracts the tenant key from the grain's primary key and populates `IHasTenantAccessor<TTenant>` grains before each call.
 
 ---
 
 ## Quick Reference Checklist
 
-When writing a new grain:
+When writing a new tenant-aware grain:
 
-- [ ] Interface extends `IArcaneGrainContract` + `IGrainWithXxxKey`
-- [ ] Collections and complex types in parameters use `[Immutable]` or `Immutable<T>`
-- [ ] Methods returning collections use `[return: Immutable]`
+- [ ] Interface extends `IGrainWithStringKey` + `ITenantGrain`
+- [ ] Grain class implements `IHasTenantAccessor<TTenant>` with a `TenantAccessor<TTenant>` property
+- [ ] `GetTenantKeyAsync()` uses `TenantGrainKey.GetTenantKey(this.GetPrimaryKeyString())`
+- [ ] Collections and complex types returned from interface methods use `[return: Immutable]`
+- [ ] Complex/collection parameters use `[Immutable]`
 - [ ] Read-only methods use `[AlwaysInterleave]`
-- [ ] Fire-and-forget methods use `[OneWay]` and return `Task` (no return value)
-- [ ] State type has `[GenerateSerializer]` + `[Id(n)]` on every property
-- [ ] Grain class uses correct base: `ArcaneGrain` (stateless) or `ArcaneGrain<TState>` (stateful)
-- [ ] Stateful grains inject `IPersistentState<TState>` with `[PersistentState("name", OrleansStoreNames.Xxx)]` on the constructor parameter — not `[StorageProvider]` on the class
-- [ ] Cross-tenant grains have `[SharedTenant]`
-- [ ] GrainFactory accessor added to `public static partial class GrainExtensions` using C# 14 `extension` block
-- [ ] Structured string keys use a `record struct` with `Template` + `Create()`; grain parses via `this.ParseKey<TKey>(Template)`
+- [ ] State type has `[GenerateSerializer]` + `[Id(n)]` starting at `0` on every property
+- [ ] Stateful grain class has `[StorageProvider(ProviderName = "...")]` and extends `Grain<TState>`
+- [ ] Grain keys are built with `TenantGrainKey.Create(tenantKey, grainKey)` — never manual string concat
+- [ ] Silo builder calls `UseMultitenancy<TTenant>()`
