@@ -2,6 +2,7 @@
   "name": "@sketch7/dotnet.multitenancy",
   "version": "0.1.0",
   "scripts": {
+    "start": "aspire run",
     "pack": "dotnet pack dotnet.multitenancy.slnx -c Release -o ./artifacts",
     "build": "dotnet build dotnet.multitenancy.slnx -c Release",
     "test": "find test/**/*.csproj | xargs -i dotnet test {} --no-build -c Release --filter Category!=e2e"
