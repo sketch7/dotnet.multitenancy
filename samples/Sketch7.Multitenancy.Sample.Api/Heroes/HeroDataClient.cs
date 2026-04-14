@@ -1,5 +1,3 @@
-using Microsoft.Extensions.Logging;
-
 namespace Sketch7.Multitenancy.Sample.Api.Heroes;
 
 public interface IHeroDataClient

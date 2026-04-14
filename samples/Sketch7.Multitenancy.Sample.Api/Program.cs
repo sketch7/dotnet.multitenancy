@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Hosting;
 using Sketch7.Multitenancy;
 using Sketch7.Multitenancy.AspNet;
 using Sketch7.Multitenancy.Orleans;
