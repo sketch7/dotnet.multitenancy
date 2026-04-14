@@ -3,6 +3,7 @@
   <PropertyGroup>
     <Description>Shared service defaults for multitenancy sample projects (health checks, OpenTelemetry, etc.).</Description>
     <IsAspireSharedProject>true</IsAspireSharedProject>
+    <IsPackable>false</IsPackable>
   </PropertyGroup>
 
   <ItemGroup>

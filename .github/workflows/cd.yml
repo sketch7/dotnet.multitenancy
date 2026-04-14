@@ -38,6 +38,8 @@ jobs:
     uses: sketch7/.github/.github/workflows/dotnet-publish.yml@dotnet-libs-v2
     with:
       force-preid: ${{ github.event.inputs.force-prerelease == 'true' }}
+    secrets:
+      nuget-auth-token: ${{ secrets.NUGET_KEY }}
 
   prepare-release:
     name: Prepare Release

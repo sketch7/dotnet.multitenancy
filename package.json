@@ -2,10 +2,7 @@
   "name": "@sketch7/dotnet.multitenancy",
   "version": "0.1.0",
   "scripts": {
-    "pack": "bash ./tools/pack.sh",
-    "prepublish:dev": "npm run pack",
-    "publish:dev": "bash ./tools/publish.sh",
-    "postpublish:dev": "rm -rf *.*nupkg",
+    "pack": "dotnet pack dotnet.multitenancy.slnx -c Release -o ./artifacts",
     "build": "dotnet build dotnet.multitenancy.slnx -c Release",
     "test": "find test -name '*.csproj' | xargs -I{} dotnet test {} -c Release --filter Category!=e2e"
   }
