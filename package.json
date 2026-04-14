@@ -4,6 +4,6 @@
   "scripts": {
     "pack": "dotnet pack dotnet.multitenancy.slnx -c Release -o ./artifacts",
     "build": "dotnet build dotnet.multitenancy.slnx -c Release",
-    "test": "find test -name '*.csproj' | xargs -I{} dotnet test {} -c Release --filter Category!=e2e"
+    "test": "find test/**/*.csproj | xargs -i dotnet test {} --no-build -c Release --filter Category!=e2e"
   }
 }
