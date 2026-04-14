@@ -2,15 +2,16 @@ using System.Diagnostics;
 
 namespace Sketch7.Multitenancy.Sample.Api.Heroes;
 
+[GenerateSerializer]
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
 public class Hero
 {
 	protected string DebuggerDisplay => $"Key: '{Key}', Name: '{Name}', Role: {Role}, Health: {Health}";
-	public string Key { get; set; } = default!;
-	public string Name { get; set; } = default!;
-	public int Health { get; set; }
-	public HeroRoleType Role { get; set; }
-	public HashSet<string> Abilities { get; set; } = [];
+	[Id(0)] public string Key { get; set; } = default!;
+	[Id(1)] public string Name { get; set; } = default!;
+	[Id(2)] public int Health { get; set; }
+	[Id(3)] public HeroRoleType Role { get; set; }
+	[Id(4)] public HashSet<string> Abilities { get; set; } = [];
 
 	public override string ToString() => DebuggerDisplay;
 }

@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
-using Sketch7.Multitenancy;
 using Sketch7.Multitenancy.AspNet;
 using Xunit;
 

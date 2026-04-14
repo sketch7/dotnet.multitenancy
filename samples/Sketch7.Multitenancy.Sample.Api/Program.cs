@@ -1,8 +1,9 @@
-using Microsoft.Extensions.Hosting;
 using Sketch7.Multitenancy;
 using Sketch7.Multitenancy.AspNet;
+using Sketch7.Multitenancy.Orleans;
 using Sketch7.Multitenancy.Sample.Api.Heroes;
 using Sketch7.Multitenancy.Sample.Api.Tenancy;
+using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,6 +14,7 @@ var tenantRegistry = new AppTenantRegistry();
 
 builder.Services
 	.AddSingleton<IAppTenantRegistry>(tenantRegistry)
+	.AddSingleton<ITenantRegistry<AppTenant>>(tenantRegistry)
 	.AddSingleton<IDataClientManager, DataClientManager>();
 
 builder.Services
@@ -26,6 +28,28 @@ builder.Services
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
+
+// Configure Orleans silo (co-hosted in same process as the ASP.NET Core app).
+// When Aspire provides a "redis" connection string, use Redis for clustering and grain persistence.
+// Otherwise fall back to localhost clustering and in-memory storage (e.g. integration tests).
+builder.Host.UseOrleans(silo =>
+{
+	var redisConnectionString = builder.Configuration.GetConnectionString("redis");
+
+	if (!string.IsNullOrEmpty(redisConnectionString))
+	{
+		silo.UseRedisClustering(redisConnectionString);
+		silo.AddRedisGrainStorage("heroes", options =>
+			options.ConfigurationOptions = ConfigurationOptions.Parse(redisConnectionString));
+	}
+	else
+	{
+		silo.UseLocalhostClustering();
+		silo.AddMemoryGrainStorage("heroes");
+	}
+
+	silo.UseMultitenancy<AppTenant>();
+});
 
 var app = builder.Build();
 
