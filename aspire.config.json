@@ -1,0 +1,5 @@
+{
+  "appHost": {
+    "path": "samples/Sketch7.Multitenancy.AppHost/Sketch7.Multitenancy.AppHost.csproj"
+  }
+}

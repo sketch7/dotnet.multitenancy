@@ -21,11 +21,11 @@ Multi-tenancy library for .NET 10 using native Microsoft DI keyed services — n
 
 ## Packages
 
-| Package | Description |
-|---|---|
-| `Sketch7.Multitenancy` | Core abstractions and builder (`ITenant`, `ITenantAccessor`, `MultitenancyBuilder`) |
-| `Sketch7.Multitenancy.AspNet` | ASP.NET Core middleware and HTTP resolver |
-| `Sketch7.Multitenancy.Orleans` | Orleans grain call filter and tenant grain key helpers |
+| Package                        | Description                                                                         |
+| ------------------------------ | ----------------------------------------------------------------------------------- |
+| `Sketch7.Multitenancy`         | Core abstractions and builder (`ITenant`, `ITenantAccessor`, `MultitenancyBuilder`) |
+| `Sketch7.Multitenancy.AspNet`  | ASP.NET Core middleware and HTTP resolver                                           |
+| `Sketch7.Multitenancy.Orleans` | Orleans grain call filter and tenant grain key helpers                              |
 
 ---
 
