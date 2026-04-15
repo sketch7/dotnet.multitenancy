@@ -1,28 +1,23 @@
-using Microsoft.Extensions.Logging;
-
 namespace Sketch7.Multitenancy.Orleans;
 
 /// <summary>
 /// Orleans incoming grain call filter that propagates tenant context to
 /// <see cref="ITenantAccessor{TTenant}"/> for tenant-aware grains.
+/// Runs on every incoming grain call. For one-time activation-time injection, use
+/// <see cref="TenantGrainActivator{TTenant}"/> instead.
 /// </summary>
 /// <typeparam name="TTenant">The tenant type.</typeparam>
 public class TenantGrainCallFilter<TTenant> : IIncomingGrainCallFilter
 	where TTenant : class, ITenant
 {
-	private readonly ITenantRegistry<TTenant> _registry;
-	private readonly ILogger _logger;
+	private readonly ITenantOrleansResolver<TTenant> _resolver;
 
 	/// <summary>
 	/// Initializes a new instance of <see cref="TenantGrainCallFilter{TTenant}"/>.
 	/// </summary>
-	public TenantGrainCallFilter(
-		ITenantRegistry<TTenant> registry,
-		ILogger<TenantGrainCallFilter<TTenant>> logger
-	)
+	public TenantGrainCallFilter(ITenantOrleansResolver<TTenant> resolver)
 	{
-		_registry = registry;
-		_logger = logger;
+		_resolver = resolver;
 	}
 
 	/// <inheritdoc />
@@ -37,19 +32,9 @@ public class TenantGrainCallFilter<TTenant> : IIncomingGrainCallFilter
 		if (context.Grain is not (ITenantGrain and IAddressable addressable))
 			return;
 
-		var primaryKey = addressable.GetPrimaryKeyString();
-
-		if (!TenantGrainKey.TryParse(primaryKey, out var tenantKey, out _) || tenantKey == null)
-		{
-			_logger.LogWarning(
-				"Grain {GrainType} has an invalid primary key format for tenant extraction: '{PrimaryKey}'.",
-				context.Grain.GetType().Name,
-				primaryKey
-			);
+		var tenant = _resolver.Resolve(addressable.GetPrimaryKeyString());
+		if (tenant is null)
 			return;
-		}
-
-		var tenant = _registry.Get(tenantKey);
 
 		if (context.Grain is IWithTenantAccessor<TTenant> withTenantAccessor)
 			withTenantAccessor.TenantAccessor.Tenant = tenant;

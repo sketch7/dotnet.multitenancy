@@ -50,7 +50,7 @@ builder.Host.UseOrleans(silo =>
 		silo.AddMemoryGrainStorage("heroes");
 	}
 
-	silo.UseMultitenancy<AppTenant>();
+	silo.UseMultitenancy<AppTenant>().WithGrainActivator();
 });
 
 var app = builder.Build();
@@ -61,5 +61,6 @@ app.MapScalarApiReference();
 app.UseMultitenancy<AppTenant>();
 app.MapTenantEndpoints();
 app.MapHeroesEndpoints();
+app.MapHeroFavoritesEndpoints();
 
 app.Run();

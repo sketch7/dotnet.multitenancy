@@ -10,15 +10,19 @@ public static class OrleansMultitenancyExtensions
 	extension(ISiloBuilder builder)
 	{
 		/// <summary>
-		/// Configures Orleans with multitenancy support, registering the tenant grain call filter.
+		/// Configures Orleans with multitenancy support and returns a builder to select the propagation strategy.
 		/// </summary>
 		/// <typeparam name="TTenant">The tenant type.</typeparam>
-		public ISiloBuilder UseMultitenancy<TTenant>()
+		/// <returns>
+		/// An <see cref="OrleansMultitenancyBuilder{TTenant}"/> — chain
+		/// <c>.WithIncomingCallFilter()</c> or <c>.WithGrainActivator()</c> to complete configuration.
+		/// </returns>
+		public OrleansMultitenancyBuilder<TTenant> UseMultitenancy<TTenant>()
 			where TTenant : class, ITenant
 		{
 			builder.ConfigureServices(services =>
-				services.AddSingleton<IIncomingGrainCallFilter, TenantGrainCallFilter<TTenant>>());
-			return builder;
+				services.AddSingleton<ITenantOrleansResolver<TTenant>, TenantOrleansResolver<TTenant>>());
+			return new OrleansMultitenancyBuilder<TTenant>(builder);
 		}
 	}
 }
