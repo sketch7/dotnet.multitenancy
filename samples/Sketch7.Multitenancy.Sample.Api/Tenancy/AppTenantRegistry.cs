@@ -17,7 +17,7 @@ public static class OrganizationNames
 public interface IAppTenantRegistry : ITenantRegistry<AppTenant>
 {
 	/// <summary>Gets the tenant by key, or <c>null</c> if not found.</summary>
-	AppTenant? GetOrDefault(string tenant);
+	AppTenant? GetOrDefault(string key);
 }
 
 /// <summary>In-memory registry of known <see cref="AppTenant"/> instances.</summary>
@@ -53,10 +53,10 @@ public sealed class AppTenantRegistry : IAppTenantRegistry
 		=> GetOrDefault(tenant) ?? throw new KeyNotFoundException($"Tenant not found for '{tenant}'");
 
 	/// <inheritdoc />
-	public AppTenant? GetOrDefault(string tenant)
+	public AppTenant? GetOrDefault(string key)
 	{
-		_tenants.TryGetValue(tenant, out var brand);
-		return brand;
+		_tenants.TryGetValue(key, out var tenant);
+		return tenant;
 	}
 
 	public IEnumerable<AppTenant> GetAll() => _tenants.Values;

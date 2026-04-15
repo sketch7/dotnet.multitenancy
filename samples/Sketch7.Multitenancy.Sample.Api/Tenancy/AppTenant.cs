@@ -4,11 +4,11 @@ namespace Sketch7.Multitenancy.Sample.Api.Tenancy;
 public record AppTenant : ITenant
 {
 	/// <inheritdoc />
-	public string Key { get; init; } = null!;
+	public required string Key { get; init; }
 
 	/// <summary>Gets the tenant display name.</summary>
-	public string Name { get; init; } = null!;
+	public required string Name { get; init; }
 
 	/// <summary>Gets the organization identifier e.g. <c>sketch7</c>.</summary>
-	public string Organization { get; init; } = null!;
+	public required string Organization { get; init; }
 }
