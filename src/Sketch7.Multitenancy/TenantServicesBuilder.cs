@@ -4,7 +4,7 @@ namespace Sketch7.Multitenancy;
 
 /// <summary>
 /// Fluent builder for configuring per-tenant service registrations.
-/// Obtained via <see cref="MultitenancyBuilder{TTenant}.WithTenantServices"/>.
+/// Obtained via <see cref="MultitenancyBuilder{TTenant}.WithServices"/>.
 /// </summary>
 /// <typeparam name="TTenant">The tenant type.</typeparam>
 public sealed class TenantServicesBuilder<TTenant>

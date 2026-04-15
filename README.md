@@ -73,7 +73,7 @@ builder.Services
     .AddMultitenancy<AppTenant>(opts => opts
         .WithRegistry(tenantRegistry)
         .WithHttpResolver<AppTenant, AppTenantHttpResolver>()
-        .WithTenantServices(tsb => tsb
+        .WithServices(tsb => tsb
             // Register different IHeroDataClient implementations per tenant group
             .For(t => t.Organization == "riot",
                 s => s.AddScoped<IHeroDataClient, LoLHeroDataClient>())
@@ -135,13 +135,13 @@ app.MapGet("/tenant", (ITenantAccessor<AppTenant> tenantAccessor) =>
 
 ### Configure per-tenant services
 
-All per-tenant registrations live inside `WithTenantServices`. You can mix by-key, predicate, and all-tenants registrations in any order:
+All per-tenant registrations live inside `WithServices`. You can mix by-key, predicate, and all-tenants registrations in any order:
 
 ```csharp
 builder.Services
     .AddMultitenancy<AppTenant>(opts => opts
         .WithRegistry(tenantRegistry)   // makes tenants available for predicates
-        .WithTenantServices(tsb => tsb
+        .WithServices(tsb => tsb
             // by exact key
             .For("lol", s => s.AddScoped<IHeroDataClient, LoLHeroDataClient>())
             .For("hots", s => s.AddScoped<IHeroDataClient, HotsHeroDataClient>())

@@ -63,7 +63,7 @@ public class MultitenancyBuilder<TTenant>
 	/// Groups per-tenant service registrations under a fluent <see cref="TenantServicesBuilder{TTenant}"/>.
 	/// </summary>
 	/// <param name="configure">Action that configures per-tenant service registrations.</param>
-	public MultitenancyBuilder<TTenant> WithTenantServices(Action<TenantServicesBuilder<TTenant>> configure)
+	public MultitenancyBuilder<TTenant> WithServices(Action<TenantServicesBuilder<TTenant>> configure)
 	{
 		var tsb = new TenantServicesBuilder<TTenant>(this);
 		configure(tsb);

@@ -23,7 +23,7 @@ builder.Services
 	.AddMultitenancy<AppTenant>(opts => opts
 		.WithHttpResolver<AppTenant, AppTenantHttpResolver>()
 		.WithTenants(tenantRegistry.GetAll())
-		.WithTenantServices(tsb => tsb
+		.WithServices(tsb => tsb
 			.For(t => t.Organization == OrganizationNames.Riot,
 				s => s.AddScoped<IHeroDataClient, MockLoLHeroDataClient>())
 			.For(t => t.Organization == OrganizationNames.Blizzard,

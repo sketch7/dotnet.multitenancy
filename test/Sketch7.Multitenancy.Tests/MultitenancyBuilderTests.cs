@@ -10,12 +10,12 @@ namespace Sketch7.Multitenancy.Tests;
 public class MultitenancyBuilderTests
 {
 	[Fact]
-	public void WithTenantServices_For_RegistersKeyedAndProxyService()
+	public void WithServices_For_RegistersKeyedAndProxyService()
 	{
 		// Arrange
 		var services = new ServiceCollection();
 		services.AddMultitenancy<TestTenant>(opts => opts
-			.WithTenantServices(tsb => tsb
+			.WithServices(tsb => tsb
 				.For("tenant-a", s => s.AddScoped<ITestService, TestServiceA>())
 				.For("tenant-b", s => s.AddScoped<ITestService, TestServiceB>())));
 
@@ -31,12 +31,12 @@ public class MultitenancyBuilderTests
 	}
 
 	[Fact]
-	public void WithTenantServices_For_ProxyResolvesCorrectServiceForCurrentTenant()
+	public void WithServices_For_ProxyResolvesCorrectServiceForCurrentTenant()
 	{
 		// Arrange
 		var services = new ServiceCollection();
 		services.AddMultitenancy<TestTenant>(opts => opts
-			.WithTenantServices(tsb => tsb
+			.WithServices(tsb => tsb
 				.For("tenant-a", s => s.AddScoped<ITestService, TestServiceA>())
 				.For("tenant-b", s => s.AddScoped<ITestService, TestServiceB>())));
 
@@ -54,12 +54,12 @@ public class MultitenancyBuilderTests
 	}
 
 	[Fact]
-	public void WithTenantServices_For_ProxyResolvesCorrectServiceForDifferentTenants()
+	public void WithServices_For_ProxyResolvesCorrectServiceForDifferentTenants()
 	{
 		// Arrange
 		var services = new ServiceCollection();
 		services.AddMultitenancy<TestTenant>(opts => opts
-			.WithTenantServices(tsb => tsb
+			.WithServices(tsb => tsb
 				.For("tenant-a", s => s.AddScoped<ITestService, TestServiceA>())
 				.For("tenant-b", s => s.AddScoped<ITestService, TestServiceB>())));
 
@@ -87,7 +87,7 @@ public class MultitenancyBuilderTests
 		// Arrange
 		var services = new ServiceCollection();
 		services.AddMultitenancy<TestTenant>(opts => opts
-			.WithTenantServices(tsb => tsb
+			.WithServices(tsb => tsb
 				.For("tenant-a", s => s.AddScoped<ITestService, TestServiceA>())));
 
 		var provider = services.BuildServiceProvider();
@@ -101,7 +101,7 @@ public class MultitenancyBuilderTests
 	}
 
 	[Fact]
-	public void WithTenantServices_ForPredicate_RegistersMatchingTenants()
+	public void WithServices_ForPredicate_RegistersMatchingTenants()
 	{
 		// Arrange
 		var tenants = new[]
@@ -114,7 +114,7 @@ public class MultitenancyBuilderTests
 		var services = new ServiceCollection();
 		services.AddMultitenancy<TestTenant>(opts => opts
 			.WithTenants(tenants)
-			.WithTenantServices(tsb => tsb
+			.WithServices(tsb => tsb
 				.For(t => t.Organization == "riot", s => s.AddScoped<ITestService, TestServiceA>())
 				.For(t => t.Organization == "blizzard", s => s.AddScoped<ITestService, TestServiceB>())));
 
@@ -137,7 +137,7 @@ public class MultitenancyBuilderTests
 	}
 
 	[Fact]
-	public void WithTenantServices_ForPredicate_ThrowsWhenNoTenantsProvided()
+	public void WithServices_ForPredicate_ThrowsWhenNoTenantsProvided()
 	{
 		// Arrange
 		var services = new ServiceCollection();
@@ -145,11 +145,11 @@ public class MultitenancyBuilderTests
 
 		// Act & Assert - no tenants set via WithTenants
 		Should.Throw<InvalidOperationException>(() =>
-			builder.WithTenantServices(tsb => tsb.For(t => true, s => s.AddScoped<ITestService, TestServiceA>())));
+			builder.WithServices(tsb => tsb.For(t => true, s => s.AddScoped<ITestService, TestServiceA>())));
 	}
 
 	[Fact]
-	public void WithTenantServices_ForAll_RegistersServicesForAllTenants()
+	public void WithServices_ForAll_RegistersServicesForAllTenants()
 	{
 		// Arrange
 		var tenants = new[]
@@ -161,7 +161,7 @@ public class MultitenancyBuilderTests
 		var services = new ServiceCollection();
 		services.AddMultitenancy<TestTenant>(opts => opts
 			.WithTenants(tenants)
-			.WithTenantServices(tsb => tsb
+			.WithServices(tsb => tsb
 				.ForAll(s => s.AddScoped<ITestService, TestServiceA>())));
 
 		var provider = services.BuildServiceProvider();
@@ -182,7 +182,7 @@ public class MultitenancyBuilderTests
 		// Arrange
 		var services = new ServiceCollection();
 		services.AddMultitenancy<TestTenant>(opts => opts
-			.WithTenantServices(tsb => tsb
+			.WithServices(tsb => tsb
 				.For("tenant-a", s => s.AddScoped<ITestService, TestServiceA>())));
 
 		var provider = services.BuildServiceProvider();
@@ -225,7 +225,7 @@ public class MultitenancyBuilderTests
 		var services = new ServiceCollection();
 		services.AddMultitenancy<TestTenant>(opts => opts
 			.WithRegistry(registry)
-			.WithTenantServices(tsb => tsb
+			.WithServices(tsb => tsb
 				.For(t => t.Organization == "riot", s => s.AddScoped<ITestService, TestServiceA>())));
 
 		var provider = services.BuildServiceProvider();
