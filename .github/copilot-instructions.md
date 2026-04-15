@@ -36,6 +36,34 @@ Three published packages + sample app:
 - **Versioning:** single source of truth is `version` in [package.json](../package.json); `Directory.Build.props` reads it for NuGet metadata
 - **Formatting:** always run `dotnet format` after changes; respect `.editorconfig`
 
+### Extension Method Namespaces
+
+Place extension methods in the namespace of the **extended type**, not the containing project's namespace. This ensures the extensions are discovered automatically without extra `using` directives.
+
+```csharp
+// ✅ CORRECT — MultitenancyBuilder<T> lives in Sketch7.Multitenancy → same namespace
+// File is physically in Sketch7.Multitenancy.AspNet project but uses the correct namespace
+namespace Sketch7.Multitenancy;
+
+public static class AspNetMultitenancyBuilderExtensions
+{
+    extension<TTenant>(MultitenancyBuilder<TTenant> builder) where TTenant : class, ITenant { ... }
+}
+
+// ❌ WRONG — namespace follows the project folder, forcing a redundant using
+namespace Sketch7.Multitenancy.AspNet;
+
+public static class AspNetMultitenancyBuilderExtensions { ... }
+```
+
+> When the namespace intentionally differs from the folder/project structure, add a `#pragma warning disable IDE0130` at the top of the file with a comment explaining the intent:
+>
+> ```csharp
+> #pragma warning disable IDE0130 // Namespace intentionally matches extended type not folder
+> ```
+>
+> Extensions on framework/third-party types (`IServiceCollection`, `IApplicationBuilder`, `ISiloBuilder`) should still use the package's own namespace (e.g., `Sketch7.Multitenancy.AspNet`) since we cannot use Microsoft's namespace.
+
 ### C# 14 Extension Blocks
 
 Always use C# 14 `extension(...)` blocks instead of traditional `this` extension methods:
@@ -58,7 +86,7 @@ public static class MyExtensions
 public static IServiceCollection AddMyService<TImpl>(this IServiceCollection services) ...
 ```
 
-> **Known SDK limitation (10.0.x):** Extension blocks with *both* a generic receiver type (`extension<T>(Builder<T> b)`) *and* method-level generic type parameters do not resolve correctly. In that case, fall back to the traditional `this` extension method. Example: `WithHttpResolver<TTenant, TResolver>()` on `MultitenancyBuilder<TTenant>`.
+> **Known SDK limitation (10.0.x):** Extension blocks with _both_ a generic receiver type (`extension<T>(Builder<T> b)`) _and_ method-level generic type parameters do not resolve correctly. In that case, fall back to the traditional `this` extension method. Example: `WithHttpResolver<TTenant, TResolver>()` on `MultitenancyBuilder<TTenant>`.
 
 ### Value Object / Model Types
 
@@ -90,15 +118,15 @@ Always use `TenantGrainKey.Create(tenantKey, grainKey)` — the format is `{tena
 
 ## Key Patterns to Reference
 
-| Pattern                         | Exemplary file                                                                                |
-| ------------------------------- | --------------------------------------------------------------------------------------------- |
-| Keyed DI + proxy generation     | [MultitenancyBuilder.cs](../src/Sketch7.Multitenancy/MultitenancyBuilder.cs)                  |
-| Minimal API / middleware wiring | [MultitenancyMiddleware.cs](../src/Sketch7.Multitenancy.AspNet/MultitenancyMiddleware.cs)     |
-| Orleans call filter             | [TenantGrainCallFilter.cs](../src/Sketch7.Multitenancy.Orleans/TenantGrainCallFilter.cs)      |
+| Pattern                         | Exemplary file                                                                                                       |
+| ------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| Keyed DI + proxy generation     | [MultitenancyBuilder.cs](../src/Sketch7.Multitenancy/MultitenancyBuilder.cs)                                         |
+| Minimal API / middleware wiring | [MultitenancyMiddleware.cs](../src/Sketch7.Multitenancy.AspNet/MultitenancyMiddleware.cs)                            |
+| Orleans call filter             | [TenantGrainCallFilter.cs](../src/Sketch7.Multitenancy.Orleans/TenantGrainCallFilter.cs)                             |
 | C# 14 extension blocks          | [MultitenancyServiceCollectionExtensions.cs](../src/Sketch7.Multitenancy/MultitenancyServiceCollectionExtensions.cs) |
-| Record value objects            | [AppTenant.cs](../samples/Sketch7.Multitenancy.Sample.Api/Tenancy/AppTenant.cs)               |
-| End-to-end registration         | [samples/.../Program.cs](../samples/Sketch7.Multitenancy.Sample.Api/Program.cs)               |
-| xUnit + Shouldly test style     | [MultitenancyBuilderTests.cs](../test/Sketch7.Multitenancy.Tests/MultitenancyBuilderTests.cs) |
+| Record value objects            | [AppTenant.cs](../samples/Sketch7.Multitenancy.Sample.Api/Tenancy/AppTenant.cs)                                      |
+| End-to-end registration         | [samples/.../Program.cs](../samples/Sketch7.Multitenancy.Sample.Api/Program.cs)                                      |
+| xUnit + Shouldly test style     | [MultitenancyBuilderTests.cs](../test/Sketch7.Multitenancy.Tests/MultitenancyBuilderTests.cs)                        |
 
 ## Testing
 

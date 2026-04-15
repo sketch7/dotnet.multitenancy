@@ -9,18 +9,17 @@ namespace Sketch7.Multitenancy;
 public class MultitenancyBuilder<TTenant>
 	where TTenant : class, ITenant
 {
-	private readonly IServiceCollection _services;
 	private readonly HashSet<Type> _registeredProxies = [];
 	private IEnumerable<TTenant>? _tenants;
 
 	/// <summary>
 	/// Gets the underlying <see cref="IServiceCollection"/>.
 	/// </summary>
-	public IServiceCollection Services => _services;
+	public IServiceCollection Services { get; }
 
 	internal MultitenancyBuilder(IServiceCollection services)
 	{
-		_services = services;
+		Services = services;
 	}
 
 	/// <summary>
@@ -30,8 +29,8 @@ public class MultitenancyBuilder<TTenant>
 	public MultitenancyBuilder<TTenant> WithRegistry<TRegistry>()
 		where TRegistry : class, ITenantRegistry<TTenant>
 	{
-		_services.AddSingleton<TRegistry>();
-		_services.AddSingleton<ITenantRegistry<TTenant>>(sp => sp.GetRequiredService<TRegistry>());
+		Services.AddSingleton<TRegistry>();
+		Services.AddSingleton<ITenantRegistry<TTenant>>(sp => sp.GetRequiredService<TRegistry>());
 		return this;
 	}
 
@@ -44,8 +43,8 @@ public class MultitenancyBuilder<TTenant>
 		where TRegistry : class, ITenantRegistry<TTenant>
 	{
 		_tenants = registry.GetAll();
-		_services.AddSingleton<TRegistry>(registry);
-		_services.AddSingleton<ITenantRegistry<TTenant>>(registry);
+		Services.AddSingleton<TRegistry>(registry);
+		Services.AddSingleton<ITenantRegistry<TTenant>>(registry);
 		return this;
 	}
 
@@ -122,7 +121,7 @@ public class MultitenancyBuilder<TTenant>
 		foreach (var descriptor in tenantServices)
 		{
 			var keyedDescriptor = CreateKeyedDescriptor(descriptor, tenantKey);
-			_services.Add(keyedDescriptor);
+			Services.Add(keyedDescriptor);
 
 			// Register an unkeyed proxy that resolves the correct keyed service based on the current tenant.
 			// Only register the proxy once per service type.
@@ -134,14 +133,14 @@ public class MultitenancyBuilder<TTenant>
 	private static ServiceDescriptor CreateKeyedDescriptor(ServiceDescriptor descriptor, string tenantKey)
 	{
 		if (descriptor.ImplementationType != null)
-			return new ServiceDescriptor(descriptor.ServiceType, tenantKey, descriptor.ImplementationType, descriptor.Lifetime);
+			return new(descriptor.ServiceType, tenantKey, descriptor.ImplementationType, descriptor.Lifetime);
 
 		if (descriptor.ImplementationFactory != null)
-			return new ServiceDescriptor(descriptor.ServiceType, tenantKey,
+			return new(descriptor.ServiceType, tenantKey,
 				(sp, _) => descriptor.ImplementationFactory(sp), descriptor.Lifetime);
 
 		if (descriptor.ImplementationInstance != null)
-			return new ServiceDescriptor(descriptor.ServiceType, tenantKey, descriptor.ImplementationInstance);
+			return new(descriptor.ServiceType, tenantKey, descriptor.ImplementationInstance);
 
 		throw new InvalidOperationException($"Cannot create keyed descriptor for service type '{descriptor.ServiceType}'.");
 	}
@@ -156,12 +155,12 @@ public class MultitenancyBuilder<TTenant>
 					typeof(ITenantAccessor<TTenant>));
 				var tenantKey = accessor.Tenant?.Key
 					?? throw new InvalidOperationException(
-						$"No tenant is set in {nameof(ITenantAccessor<TTenant>)}. " +
+						$"No tenant is set in {nameof(ITenantAccessor<>)}. " +
 						"Ensure multitenancy middleware runs before services are resolved.");
 				return ((IKeyedServiceProvider)sp).GetRequiredKeyedService(serviceType, tenantKey);
 			},
 			lifetime);
 
-		_services.Add(proxyDescriptor);
+		Services.Add(proxyDescriptor);
 	}
 }

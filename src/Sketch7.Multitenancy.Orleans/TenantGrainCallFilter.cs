@@ -18,7 +18,8 @@ public class TenantGrainCallFilter<TTenant> : IIncomingGrainCallFilter
 	/// </summary>
 	public TenantGrainCallFilter(
 		ITenantRegistry<TTenant> registry,
-		ILogger<TenantGrainCallFilter<TTenant>> logger)
+		ILogger<TenantGrainCallFilter<TTenant>> logger
+	)
 	{
 		_registry = registry;
 		_logger = logger;
