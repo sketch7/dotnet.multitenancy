@@ -60,11 +60,22 @@ public class MultitenancyBuilder<TTenant>
 	}
 
 	/// <summary>
+	/// Groups per-tenant service registrations under a fluent <see cref="TenantServicesBuilder{TTenant}"/>.
+	/// </summary>
+	/// <param name="configure">Action that configures per-tenant service registrations.</param>
+	public MultitenancyBuilder<TTenant> WithTenantServices(Action<TenantServicesBuilder<TTenant>> configure)
+	{
+		var tsb = new TenantServicesBuilder<TTenant>(this);
+		configure(tsb);
+		return this;
+	}
+
+	/// <summary>
 	/// Configures services for a specific tenant identified by key.
 	/// </summary>
 	/// <param name="key">The tenant key.</param>
 	/// <param name="configure">Action to configure tenant-specific services.</param>
-	public MultitenancyBuilder<TTenant> ForTenant(string key, Action<IServiceCollection> configure)
+	internal MultitenancyBuilder<TTenant> ForTenant(string key, Action<IServiceCollection> configure)
 	{
 		var tenantServices = new ServiceCollection();
 		configure(tenantServices);
@@ -78,7 +89,7 @@ public class MultitenancyBuilder<TTenant>
 	/// </summary>
 	/// <param name="predicate">Filter to select matching tenants.</param>
 	/// <param name="configure">Action to configure services for matching tenants.</param>
-	public MultitenancyBuilder<TTenant> ForTenants(Func<TTenant, bool> predicate, Action<IServiceCollection> configure)
+	internal MultitenancyBuilder<TTenant> ForTenants(Func<TTenant, bool> predicate, Action<IServiceCollection> configure)
 	{
 		if (_tenants == null)
 			throw new InvalidOperationException(
@@ -94,7 +105,7 @@ public class MultitenancyBuilder<TTenant>
 	/// Configures shared services applied to all tenants.
 	/// </summary>
 	/// <param name="configure">Action to configure services for all tenants.</param>
-	public MultitenancyBuilder<TTenant> ForAllTenants(Action<IServiceCollection> configure)
+	internal MultitenancyBuilder<TTenant> ForAllTenants(Action<IServiceCollection> configure)
 	{
 		if (_tenants == null)
 			throw new InvalidOperationException(

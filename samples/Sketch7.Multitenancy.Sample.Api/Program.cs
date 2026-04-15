@@ -20,13 +20,15 @@ builder.Services
 	.AddSingleton<IDataClientManager, DataClientManager>();
 
 builder.Services
-	.AddMultitenancy<AppTenant>()
-	.WithHttpResolver<AppTenant, AppTenantHttpResolver>()
-	.WithTenants(tenantRegistry.GetAll())
-	.ForTenants(t => t.Organization == OrganizationNames.Riot,
-		s => s.AddScoped<IHeroDataClient, MockLoLHeroDataClient>())
-	.ForTenants(t => t.Organization == OrganizationNames.Blizzard,
-		s => s.AddScoped<IHeroDataClient, MockHotsHeroDataClient>());
+	.AddMultitenancy<AppTenant>(opts => opts
+		.WithHttpResolver<AppTenant, AppTenantHttpResolver>()
+		.WithTenants(tenantRegistry.GetAll())
+		.WithTenantServices(tsb => tsb
+			.For(t => t.Organization == OrganizationNames.Riot,
+				s => s.AddScoped<IHeroDataClient, MockLoLHeroDataClient>())
+			.For(t => t.Organization == OrganizationNames.Blizzard,
+				s => s.AddScoped<IHeroDataClient, MockHotsHeroDataClient>())));
+
 
 builder.Services.AddOpenApi();
 

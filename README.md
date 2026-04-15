@@ -67,15 +67,20 @@ public sealed class AppTenantRegistry : IAppTenantRegistry
 var tenantRegistry = new AppTenantRegistry();
 
 builder.Services
-    .AddSingleton<AppTenantRegistry>(tenantRegistry)
-    .AddMultitenancy<AppTenant>()
-    .WithHttpResolver<AppTenant, AppTenantHttpResolver>()
-    .WithTenants(tenantRegistry.GetAll())
-    // Register different IHeroDataClient implementations per tenant group
-    .ForTenants(t => t.Organization == "riot",
-        s => s.AddScoped<IHeroDataClient, LoLHeroDataClient>())
-    .ForTenants(t => t.Organization == "blizzard",
-        s => s.AddScoped<IHeroDataClient, HotsHeroDataClient>());
+    .AddSingleton<AppTenantRegistry>(tenantRegistry);
+
+builder.Services
+    .AddMultitenancy<AppTenant>(opts => opts
+        .WithRegistry(tenantRegistry)
+        .WithHttpResolver<AppTenant, AppTenantHttpResolver>()
+        .WithTenantServices(tsb => tsb
+            // Register different IHeroDataClient implementations per tenant group
+            .For(t => t.Organization == "riot",
+                s => s.AddScoped<IHeroDataClient, LoLHeroDataClient>())
+            .For(t => t.Organization == "blizzard",
+                s => s.AddScoped<IHeroDataClient, HotsHeroDataClient>())
+        )
+    );
 ```
 
 ### 4. Implement the HTTP resolver
@@ -128,22 +133,25 @@ app.MapGet("/tenant", (ITenantAccessor<AppTenant> tenantAccessor) =>
     TypedResults.Ok(tenantAccessor.Tenant?.Name ?? "unknown"));
 ```
 
-### Register services for a specific tenant by key
+### Configure per-tenant services
+
+All per-tenant registrations live inside `WithTenantServices`. You can mix by-key, predicate, and all-tenants registrations in any order:
 
 ```csharp
 builder.Services
-    .AddMultitenancy<AppTenant>()
-    .ForTenant("lol", s => s.AddScoped<IHeroDataClient, LoLHeroDataClient>())
-    .ForTenant("hots", s => s.AddScoped<IHeroDataClient, HotsHeroDataClient>());
-```
-
-### Register the same services for all tenants
-
-```csharp
-builder.Services
-    .AddMultitenancy<AppTenant>()
-    .WithTenants(tenantRegistry.GetAll())
-    .ForAllTenants(s => s.AddScoped<IAuditLogger, DefaultAuditLogger>());
+    .AddMultitenancy<AppTenant>(opts => opts
+        .WithRegistry(tenantRegistry)   // makes tenants available for predicates
+        .WithTenantServices(tsb => tsb
+            // by exact key
+            .For("lol", s => s.AddScoped<IHeroDataClient, LoLHeroDataClient>())
+            .For("hots", s => s.AddScoped<IHeroDataClient, HotsHeroDataClient>())
+            // by predicate (requires WithRegistry or WithTenants)
+            .For(t => t.Organization == "riot",
+                s => s.AddScoped<IHeroDataClient, LoLHeroDataClient>())
+            // same service for every tenant
+            .ForAll(s => s.AddScoped<IAuditLogger, DefaultAuditLogger>())
+        )
+    );
 ```
 
 ### Customise the invalid-tenant response
