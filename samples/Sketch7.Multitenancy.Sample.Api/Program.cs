@@ -24,10 +24,14 @@ builder.Services
 		.WithHttpResolver<AppTenant, AppTenantHttpResolver>()
 		.WithTenants(tenantRegistry.GetAll())
 		.WithServices(tsb => tsb
-			.For(t => t.Organization == OrganizationNames.Riot,
-				s => s.AddScoped<IHeroDataClient, MockLoLHeroDataClient>())
-			.For(t => t.Organization == OrganizationNames.Blizzard,
-				s => s.AddScoped<IHeroDataClient, MockHotsHeroDataClient>())));
+			.For(t => t.Organization == OrganizationNames.Riot, s => s
+				.AddScoped<IHeroDataClient, MockLoLHeroDataClient>()
+			)
+			.For(t => t.Organization == OrganizationNames.Blizzard, s => s
+				.AddScoped<IHeroDataClient, MockHotsHeroDataClient>()
+			)
+		)
+	);
 
 
 builder.Services.AddOpenApi();

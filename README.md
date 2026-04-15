@@ -48,8 +48,8 @@ public sealed class AppTenantRegistry : IAppTenantRegistry
         new() { Key = "hots", Name = "Heroes of the Storm", Organization = "blizzard" },
     ];
 
-    public AppTenant Get(string key) =>
-        GetOrDefault(key) ?? throw new KeyNotFoundException($"Tenant '{key}' not found.");
+    public AppTenant Get(string key)
+        => GetOrDefault(key) ?? throw new KeyNotFoundException($"Tenant '{key}' not found.");
 
     public AppTenant? GetOrDefault(string key)
         => _tenants.FirstOrDefault(t => t.Key == key);
@@ -73,10 +73,10 @@ builder.Services
         .WithHttpResolver<AppTenant, AppTenantHttpResolver>()
         .WithServices(tsb => tsb
             // Register different IHeroDataClient implementations per tenant group
-            .For(t => t.Organization == "riot",
-                s => s.AddScoped<IHeroDataClient, LoLHeroDataClient>())
-            .For(t => t.Organization == "blizzard",
-                s => s.AddScoped<IHeroDataClient, HotsHeroDataClient>())
+            .For(t => t.Organization == "riot", s => s
+                .AddScoped<IHeroDataClient, LoLHeroDataClient>())
+            .For(t => t.Organization == "blizzard", s => s
+                .AddScoped<IHeroDataClient, HotsHeroDataClient>())
         )
     );
 ```
@@ -90,7 +90,8 @@ public sealed class AppTenantHttpResolver : ITenantHttpResolver<AppTenant>
 {
     private readonly AppTenantRegistry _registry;
 
-    public AppTenantHttpResolver(AppTenantRegistry registry) => _registry = registry;
+    public AppTenantHttpResolver(AppTenantRegistry registry)
+        => _registry = registry;
 
     public Task<AppTenant?> Resolve(HttpContext httpContext)
     {
@@ -144,8 +145,8 @@ builder.Services
             .For("lol", s => s.AddScoped<IHeroDataClient, LoLHeroDataClient>())
             .For("hots", s => s.AddScoped<IHeroDataClient, HotsHeroDataClient>())
             // by predicate (requires WithRegistry or WithTenants)
-            .For(t => t.Organization == "riot",
-                s => s.AddScoped<IHeroDataClient, LoLHeroDataClient>())
+            .For(t => t.Organization == "riot", s => s
+                .AddScoped<IHeroDataClient, LoLHeroDataClient>())
             // same service for every tenant
             .ForAll(s => s.AddScoped<IAuditLogger, DefaultAuditLogger>())
         )
