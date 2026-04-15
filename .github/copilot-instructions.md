@@ -62,7 +62,7 @@ public static IServiceCollection AddMyService<TImpl>(this IServiceCollection ser
 
 ### Value Object / Model Types
 
-- Use `record` for immutable data/domain models (e.g. `AppTenant`, `Hero`, `AppTenantConfig`)
+- Use `record` for immutable data/domain models (e.g. `AppTenant`, `Hero`)
 - Use `sealed class` for mutable stateful objects (e.g. `TenantAccessor<T>`, `HeroGrainState`)
 - Use `sealed` modifier on concrete implementations that are not meant to be subclassed
 - Use `init` setters on record properties; use object initializer syntax
