@@ -25,13 +25,15 @@ public static class HeroesEndpoints
 			.WithSummary("Get all heroes")
 			.WithDescription("Returns all heroes for the current tenant.");
 
-			group.MapGet("/{key}", async Task<Results<Ok<Hero?>, NotFound>> (string key, IGrainFactory grainFactory, ITenantAccessor<AppTenant> tenantAccessor) =>
+			group.MapGet("/{key}", async Task<Results<Ok<Hero?>, NotFound>> (
+				string key, IGrainFactory grainFactory, ITenantAccessor<AppTenant> tenantAccessor
+			) =>
 			{
 				var grain = GetHeroGrain(grainFactory, tenantAccessor);
 				var hero = await grain.GetByKeyAsync(key);
-				return hero is not null
-					? TypedResults.Ok<Hero?>(hero)
-					: TypedResults.NotFound();
+				return hero is null
+					? TypedResults.NotFound()
+					: TypedResults.Ok<Hero?>(hero);
 			})
 			.WithName("GetHeroByKey")
 			.WithSummary("Get hero by key")
