@@ -23,7 +23,9 @@ public class MultitenancyBuilder<TTenant>
 	}
 
 	/// <summary>
-	/// Registers the tenant registry and provides tenant enumeration for predicate-based configuration.
+	/// Registers the tenant registry type.
+	/// Use <see cref="WithRegistry{TRegistry}(TRegistry)"/> or <see cref="WithTenants(IEnumerable{TTenant})"/>
+	/// to provide tenant enumeration for predicate-based configuration.
 	/// </summary>
 	/// <typeparam name="TRegistry">The registry implementation type.</typeparam>
 	public MultitenancyBuilder<TTenant> WithRegistry<TRegistry>()
