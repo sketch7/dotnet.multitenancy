@@ -15,9 +15,6 @@ builder.AddServiceDefaults();
 var tenantRegistry = new AppTenantRegistry();
 
 builder.Services
-	.AddSingleton<IDataClientManager, DataClientManager>();
-
-builder.Services
 	.AddMultitenancy<AppTenant>(opts => opts
 		.WithRegistry<IAppTenantRegistry>(tenantRegistry)
 		.WithHttpResolver<AppTenant, AppTenantHttpResolver>()

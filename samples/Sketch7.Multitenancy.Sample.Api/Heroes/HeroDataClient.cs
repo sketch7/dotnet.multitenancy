@@ -14,32 +14,34 @@ public interface IHeroDataClient
 public sealed class MockLoLHeroDataClient : IHeroDataClient
 {
 	private readonly ILogger<MockLoLHeroDataClient> _logger;
+	private readonly List<Hero> _data =
+	[
+		new() { Name = "Rengar", Key = "rengar", Role = HeroRoleType.Assassin, Abilities = ["savagery", "battle-roar", "bola-strike", "thrill-of-the-hunt"] },
+		new() { Name = "Kha'zix", Key = "kha-zix", Role = HeroRoleType.Assassin, Abilities = ["taste-their-fear", "void-spike", "leap", "void-assault"] },
+		new() { Name = "Singed", Key = "singed", Role = HeroRoleType.Tank, Abilities = ["poison-trail", "mega-adhesive", "fling", "insanity-potion"] }
+	];
 
 	/// <summary>Gets the unique instance identifier for diagnostics.</summary>
 	public Guid InstanceId { get; } = Guid.NewGuid();
 
 	/// <summary>Initializes a new instance of <see cref="MockLoLHeroDataClient"/>.</summary>
-	public MockLoLHeroDataClient(
-		ILogger<MockLoLHeroDataClient> logger,
-		IDataClientManager clientManager
-	)
+	public MockLoLHeroDataClient(ILogger<MockLoLHeroDataClient> logger)
 	{
 		_logger = logger;
-		clientManager.Register(this);
 	}
 
 	/// <inheritdoc />
 	public Task<List<Hero>> GetAll()
 	{
 		_logger.LogDebug("[{Method}] Fetch from mock service ({InstanceId})", nameof(GetAll), InstanceId);
-		return Task.FromResult(MockDataService.GetHeroes().ToList());
+		return Task.FromResult(_data);
 	}
 
 	/// <inheritdoc />
 	public Task<Hero?> GetByKey(string key)
 	{
 		_logger.LogDebug("[{Method}] Fetching key: {Key} from mock service ({InstanceId})", nameof(GetByKey), key.SanitizeForLog(), InstanceId);
-		return Task.FromResult(MockDataService.GetById(key));
+		return Task.FromResult(_data.Find(x => x.Key == key));
 	}
 }
 
@@ -60,13 +62,9 @@ public sealed class MockHotsHeroDataClient : IHeroDataClient
 	public Guid InstanceId { get; } = Guid.NewGuid();
 
 	/// <summary>Initializes a new instance of <see cref="MockHotsHeroDataClient"/>.</summary>
-	public MockHotsHeroDataClient(
-		ILogger<MockHotsHeroDataClient> logger,
-		IDataClientManager clientManager
-	)
+	public MockHotsHeroDataClient(ILogger<MockHotsHeroDataClient> logger)
 	{
 		_logger = logger;
-		clientManager.Register(this);
 	}
 
 	/// <inheritdoc />
