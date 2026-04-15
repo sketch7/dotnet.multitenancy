@@ -95,6 +95,33 @@ public static IServiceCollection AddMyService<TImpl>(this IServiceCollection ser
 - Use `sealed` modifier on concrete implementations that are not meant to be subclassed
 - Use `init` setters on record properties; use object initializer syntax
 
+### Early Exit / Guard Clauses
+
+Prefer early returns and guard clauses over nested `if` blocks, when it avoids nesting without duplicating logic:
+
+```csharp
+// ✅ CORRECT — guard at the top, happy path flows unindented
+public void Process(string key)
+{
+    if (key is null) return;
+    if (!IsValid(key)) return;
+
+    DoWork(key);
+}
+
+// ❌ WRONG — unnecessary nesting
+public void Process(string key)
+{
+    if (key is not null)
+    {
+        if (IsValid(key))
+        {
+            DoWork(key);
+        }
+    }
+}
+```
+
 ### Exception Throwing
 
 ```csharp
