@@ -2,17 +2,12 @@ using Sketch7.Multitenancy.AspNet;
 
 namespace Sketch7.Multitenancy.Sample.Api.Tenancy;
 
-public class AppTenantHttpResolver : ITenantHttpResolver<AppTenant>
+public class AppTenantHttpResolver(
+	IAppTenantRegistry tenantRegistry
+) : ITenantHttpResolver<AppTenant>
 {
-	private readonly IAppTenantRegistry _tenantRegistry;
-
-	public AppTenantHttpResolver(IAppTenantRegistry tenantRegistry)
-	{
-		_tenantRegistry = tenantRegistry;
-	}
-
 	public Task<AppTenant?> Resolve(HttpContext httpContext)
 		=> httpContext.Request.Headers.TryGetValue("X-SSV-Tenant", out var tenantValue)
-			? Task.FromResult(_tenantRegistry.GetOrDefault(tenantValue.ToString()))
+			? Task.FromResult(tenantRegistry.GetOrDefault(tenantValue.ToString()))
 			: Task.FromResult<AppTenant?>(null);
 }

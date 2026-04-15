@@ -1,19 +1,14 @@
-using System.Diagnostics;
-
 namespace Sketch7.Multitenancy.Sample.Api.Tenancy;
 
-[DebuggerDisplay("{DebuggerDisplay,nq}")]
-public class AppTenant : ITenant
+/// <summary>Represents an application tenant.</summary>
+public record AppTenant : ITenant
 {
-	protected string DebuggerDisplay => $"Key: '{Key}', Name: '{Name}', Organization: {Organization}";
-
 	/// <inheritdoc />
-	public string Key { get; set; } = default!;
+	public required string Key { get; init; }
 
-	public string Name { get; set; } = default!;
+	/// <summary>Gets the tenant display name.</summary>
+	public required string Name { get; init; }
 
-	/// <summary>
-	/// Gets or sets the organization e.g. 'sketch7'.
-	/// </summary>
-	public string Organization { get; set; } = default!;
+	/// <summary>Gets the organization identifier e.g. <c>sketch7</c>.</summary>
+	public required string Organization { get; init; }
 }

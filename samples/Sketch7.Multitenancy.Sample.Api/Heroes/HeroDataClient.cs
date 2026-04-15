@@ -1,43 +1,49 @@
 namespace Sketch7.Multitenancy.Sample.Api.Heroes;
 
+/// <summary>Provides hero data for a single tenant.</summary>
 public interface IHeroDataClient
 {
+	/// <summary>Gets a single hero by key, or <c>null</c> if not found.</summary>
 	Task<Hero?> GetByKey(string key);
+
+	/// <summary>Gets all available heroes.</summary>
 	Task<List<Hero>> GetAll();
 }
 
-public class MockLoLHeroDataClient : IHeroDataClient
+/// <summary>Mock <see cref="IHeroDataClient"/> implementation backed by League of Legends data.</summary>
+public sealed class MockLoLHeroDataClient : IHeroDataClient
 {
 	private readonly ILogger<MockLoLHeroDataClient> _logger;
 
+	/// <summary>Gets the unique instance identifier for diagnostics.</summary>
 	public Guid InstanceId { get; } = Guid.NewGuid();
 
+	/// <summary>Initializes a new instance of <see cref="MockLoLHeroDataClient"/>.</summary>
 	public MockLoLHeroDataClient(
 		ILogger<MockLoLHeroDataClient> logger,
-		IDataClientManager clientManager
-	)
+		IDataClientManager clientManager)
 	{
 		_logger = logger;
 		clientManager.Register(this);
 	}
 
+	/// <inheritdoc />
 	public Task<List<Hero>> GetAll()
 	{
 		_logger.LogDebug("[{Method}] Fetch from mock service ({InstanceId})", nameof(GetAll), InstanceId);
 		return Task.FromResult(MockDataService.GetHeroes().ToList());
 	}
 
+	/// <inheritdoc />
 	public Task<Hero?> GetByKey(string key)
 	{
-		_logger.LogDebug("[{Method}] Fetching key: {Key} from mock service ({InstanceId})", nameof(GetByKey), SanitizeForLog(key), InstanceId);
+		_logger.LogDebug("[{Method}] Fetching key: {Key} from mock service ({InstanceId})", nameof(GetByKey), key.SanitizeForLog(), InstanceId);
 		return Task.FromResult(MockDataService.GetById(key));
 	}
-
-	private static string SanitizeForLog(string value)
-		=> value.Replace(Environment.NewLine, string.Empty).Replace("\n", string.Empty).Replace("\r", string.Empty);
 }
 
-public class MockHotsHeroDataClient : IHeroDataClient, IDisposable
+/// <summary>Mock <see cref="IHeroDataClient"/> implementation backed by Heroes of the Storm data.</summary>
+public sealed class MockHotsHeroDataClient : IHeroDataClient
 {
 	private readonly ILogger<MockHotsHeroDataClient> _logger;
 	private readonly List<Hero> _data =
@@ -49,31 +55,29 @@ public class MockHotsHeroDataClient : IHeroDataClient, IDisposable
 		new() { Name = "Kael'Thas", Key = "keal-thas", Role = HeroRoleType.Assassin, Abilities = ["poison-trail", "mega-adhesive", "fling", "insanity-potion"] },
 	];
 
+	/// <summary>Gets the unique instance identifier for diagnostics.</summary>
 	public Guid InstanceId { get; } = Guid.NewGuid();
 
+	/// <summary>Initializes a new instance of <see cref="MockHotsHeroDataClient"/>.</summary>
 	public MockHotsHeroDataClient(
 		ILogger<MockHotsHeroDataClient> logger,
-		IDataClientManager clientManager
-	)
+		IDataClientManager clientManager)
 	{
 		_logger = logger;
 		clientManager.Register(this);
 	}
 
+	/// <inheritdoc />
 	public Task<List<Hero>> GetAll()
 	{
 		_logger.LogDebug("[{Method}] Fetch from mock service ({InstanceId})", nameof(GetAll), InstanceId);
 		return Task.FromResult(_data);
 	}
 
+	/// <inheritdoc />
 	public Task<Hero?> GetByKey(string key)
 	{
-		_logger.LogDebug("[{Method}] Fetching key: {Key} from mock service ({InstanceId})", nameof(GetByKey), SanitizeForLog(key), InstanceId);
+		_logger.LogDebug("[{Method}] Fetching key: {Key} from mock service ({InstanceId})", nameof(GetByKey), key.SanitizeForLog(), InstanceId);
 		return Task.FromResult(_data.Find(x => x.Key == key));
 	}
-
-	private static string SanitizeForLog(string value)
-		=> value.Replace(Environment.NewLine, string.Empty).Replace("\n", string.Empty).Replace("\r", string.Empty);
-
-	public void Dispose() { }
 }

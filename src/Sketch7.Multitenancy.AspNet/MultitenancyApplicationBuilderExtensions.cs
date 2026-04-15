@@ -4,26 +4,27 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Sketch7.Multitenancy.AspNet;
 
 /// <summary>
-/// Extension methods for integrating multitenancy into an ASP.NET Core pipeline.
+/// Extension members for integrating multitenancy into an ASP.NET Core pipeline.
 /// </summary>
 public static class MultitenancyApplicationBuilderExtensions
 {
-	/// <summary>
-	/// Adds the multitenancy middleware to the request pipeline.
-	/// Must be placed before any middleware that depends on the resolved tenant.
-	/// </summary>
-	/// <typeparam name="TTenant">The tenant type.</typeparam>
-	/// <param name="app">The application builder.</param>
-	/// <param name="options">Optional middleware options.</param>
-	public static IApplicationBuilder UseMultitenancy<TTenant>(
-		this IApplicationBuilder app,
-		MultitenancyMiddlewareOptions? options = null)
-		where TTenant : class, ITenant
-		=> app.UseMiddleware<MultitenancyMiddleware<TTenant>>(options ?? new MultitenancyMiddlewareOptions());
+	extension(IApplicationBuilder app)
+	{
+		/// <summary>
+		/// Adds the multitenancy middleware to the request pipeline.
+		/// Must be placed before any middleware that depends on the resolved tenant.
+		/// </summary>
+		/// <typeparam name="TTenant">The tenant type.</typeparam>
+		/// <param name="options">Optional middleware options.</param>
+		public IApplicationBuilder UseMultitenancy<TTenant>(
+			MultitenancyMiddlewareOptions? options = null)
+			where TTenant : class, ITenant
+			=> app.UseMiddleware<MultitenancyMiddleware<TTenant>>(options ?? new MultitenancyMiddlewareOptions());
+	}
 }
 
 /// <summary>
-/// Extension methods for registering ASP.NET Core multitenancy services on <see cref="MultitenancyBuilder{TTenant}"/>.
+/// Extension members for registering ASP.NET Core multitenancy services on <see cref="MultitenancyBuilder{TTenant}"/>.
 /// </summary>
 public static class AspNetMultitenancyBuilderExtensions
 {

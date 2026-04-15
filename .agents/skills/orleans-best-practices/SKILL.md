@@ -163,47 +163,64 @@ if (TenantGrainKey.TryParse(primaryKey, out var tenantKey, out var grainKey))
 
 ## 5. Base Class Selection
 
-Use standard Orleans base classes:
+Always use `Grain` (stateless base). Add state via `IPersistentState<TState>` constructor injection — **not** `Grain<TState>` (legacy).
 
-| Class           | State    | Use When                                                    |
-| --------------- | -------- | ----------------------------------------------------------- |
-| `Grain`         | None     | Stateless grains or grains that manage their own state      |
-| `Grain<TState>` | Built-in | Grains with simple persistent state via `[StorageProvider]` |
+| Class           | State    | Use When                              |
+| --------------- | -------- | ------------------------------------- |
+| `Grain`         | None     | All grains — stateless or stateful    |
+| `Grain<TState>` | Built-in | ❌ Legacy. Do **not** use in new code |
 
 ```csharp
 // Stateless grain
-public class WorkerGrain : Grain, IWorkerGrain { }
+public sealed class WorkerGrain : Grain, IWorkerGrain { }
 
-// Stateful grain
-[StorageProvider(ProviderName = "heroes")]
-public sealed class HeroGrain : Grain<HeroGrainState>, IHeroGrain { }
+// Stateful grain — inject IPersistentState<T>
+public sealed class HeroGrain : Grain, IHeroGrain
+{
+    private readonly IPersistentState<HeroGrainState> _state;
+
+    public HeroGrain(
+        [PersistentState("heroes", "heroes")] IPersistentState<HeroGrainState> state)
+    {
+        _state = state;
+    }
+}
 ```
 
 ---
 
 ## 6. Grain Persistence
 
-Use `Grain<TState>` with `[StorageProvider(ProviderName = "providerName")]` on the grain class. The state is accessible via `State` and persisted via `WriteStateAsync()`.
+Inject `IPersistentState<TState>` into the constructor with `[PersistentState("stateName", "providerName")]`. This is the **recommended** approach in Orleans 10. `Grain<TState>` is considered legacy and should not be used in new code.
 
 ```csharp
-[StorageProvider(ProviderName = "heroes")]
-public sealed class HeroGrain : Grain<HeroGrainState>, IHeroGrain, IHasTenantAccessor<AppTenant>
+public sealed class HeroGrain : Grain, IHeroGrain, IHasTenantAccessor<AppTenant>
 {
+    private readonly IPersistentState<HeroGrainState> _state;
+
+    public HeroGrain(
+        [PersistentState("heroes", "heroes")] IPersistentState<HeroGrainState> state)
+    {
+        _state = state;
+    }
+
     // State is loaded before OnActivateAsync() — safe to read in any method
-    public Task<List<Hero>> GetAllAsync() => Task.FromResult(State.Heroes);
+    public Task<List<Hero>> GetAllAsync() => Task.FromResult(_state.State.Heroes);
 
     public async Task SetHeroesAsync(List<Hero> heroes)
     {
-        State.Heroes = heroes;
-        await WriteStateAsync();
+        _state.State.Heroes = heroes;
+        await _state.WriteStateAsync();
     }
 }
 ```
 
 ### Rules
 
-- `State` is loaded before `OnActivateAsync()` — safe to read immediately
-- Always call `WriteStateAsync()` after mutating `State`
+- `_state.State` is loaded before `OnActivateAsync()` — safe to read immediately; **do not** access it in the constructor
+- Always call `_state.WriteStateAsync()` after mutating `_state.State`
+- The first argument to `[PersistentState]` is the **state name** (logical); the second is the **storage provider name**
+- Multiple independent states are supported — inject multiple `IPersistentState<T>` parameters with distinct state names
 - Provider names are configured in the silo builder (e.g. `siloBuilder.AddMemoryGrainStorage("heroes")`)
 
 ---
@@ -227,9 +244,16 @@ public interface IHeroGrain : IGrainWithStringKey, ITenantGrain
 The `TenantGrainCallFilter<TTenant>` automatically populates the grain's `TenantAccessor.Tenant` before each call — but only when the grain implements `IHasTenantAccessor<TTenant>`. Add a public auto-property of type `TenantAccessor<TTenant>` to opt in:
 
 ```csharp
-[StorageProvider(ProviderName = "heroes")]
-public sealed class HeroGrain : Grain<HeroGrainState>, IHeroGrain, IHasTenantAccessor<AppTenant>
+public sealed class HeroGrain : Grain, IHeroGrain, IHasTenantAccessor<AppTenant>
 {
+    private readonly IPersistentState<HeroGrainState> _state;
+
+    public HeroGrain(
+        [PersistentState("heroes", "heroes")] IPersistentState<HeroGrainState> state)
+    {
+        _state = state;
+    }
+
     /// <inheritdoc />
     public TenantAccessor<AppTenant> TenantAccessor { get; } = new();
 
@@ -285,6 +309,6 @@ When writing a new tenant-aware grain:
 - [ ] Complex/collection parameters use `[Immutable]`
 - [ ] Read-only methods use `[AlwaysInterleave]`
 - [ ] State type has `[GenerateSerializer]` + `[Id(n)]` starting at `0` on every property
-- [ ] Stateful grain class has `[StorageProvider(ProviderName = "...")]` and extends `Grain<TState>`
+- [ ] Stateful grain injects `IPersistentState<TState>` via `[PersistentState("stateName", "providerName")]` constructor parameter; grain class extends `Grain` (not `Grain<TState>`)
 - [ ] Grain keys are built with `TenantGrainKey.Create(tenantKey, grainKey)` — never manual string concat
 - [ ] Silo builder calls `UseMultitenancy<TTenant>()`
