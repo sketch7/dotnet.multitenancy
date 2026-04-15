@@ -2,7 +2,7 @@ namespace Sketch7.Multitenancy.Orleans;
 
 /// <summary>
 /// Marks an Orleans grain as tenant-aware.
-/// The grain primary key is expected to be prefixed with the tenant key in the format <c>{tenantKey}/{grainKey}</c>.
+/// The grain primary key is expected to follow the format <c>tenant/{tenantKey}/{grainId}</c>.
 /// </summary>
 public interface ITenantGrain : IGrain
 {

@@ -71,7 +71,7 @@ public sealed class TenantGrainActivator<TTenant> : IConfigureGrainContextProvid
 	/// </summary>
 	public void Configure(IGrainContext context)
 	{
-		var tenant = _resolver.Resolve(context.GrainId.Key.ToString());
+		var tenant = _resolver.Resolve(context.GrainId.Key);
 
 		// Set tenant in ActivationServices before grain construction — enables constructor injection.
 		if (context.ActivationServices.GetService<TenantAccessor<TTenant>>() is { } tenantAccessor)

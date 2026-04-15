@@ -33,7 +33,7 @@ public sealed class HeroTypeGrainState
 
 /// <summary>
 /// Tenant-scoped grain that provides hero type data for a single tenant.
-/// Primary key format: <c>{tenantKey}/hero-types</c> — see <see cref="TenantGrainKey"/>.
+/// Primary key format: <c>tenant/{tenantKey}/hero-types</c> — see <see cref="TenantGrainKey"/>.
 /// </summary>
 public interface IHeroTypeGrain : IGrainWithStringKey, ITenantGrain
 {
@@ -45,7 +45,7 @@ public interface IHeroTypeGrain : IGrainWithStringKey, ITenantGrain
 
 /// <summary>
 /// Tenant-scoped grain that acts as a read-through cache for hero type data.
-/// The grain key follows the convention <c>{tenantKey}/hero-types</c>.
+/// The grain key follows the convention <c>tenant/{tenantKey}/hero-types</c>.
 /// </summary>
 /// <remarks>
 /// On first activation the grain loads hero types from the per-tenant <see cref="IHeroDataClient"/>

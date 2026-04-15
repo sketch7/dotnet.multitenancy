@@ -26,14 +26,14 @@ public sealed class TenantOrleansResolver<TTenant> : ITenantOrleansResolver<TTen
 	}
 
 	/// <inheritdoc />
-	public TTenant? Resolve(string primaryKey)
+	public TTenant? Resolve(in IdSpan grainKey)
 	{
-		if (!TenantGrainKey.TryParse(primaryKey, out var tenantKey, out _) || tenantKey == null)
+		if (!TenantGrainKey.TryParse(grainKey, out var key))
 		{
-			_logger.LogWarning("Could not extract tenant key from grain primary key '{PrimaryKey}'.", primaryKey);
+			_logger.LogWarning("Could not extract tenant key from grain key '{GrainKey}'.", grainKey);
 			return null;
 		}
 
-		return _registry.Get(tenantKey);
+		return _registry.Get(key.TenantKey);
 	}
 }

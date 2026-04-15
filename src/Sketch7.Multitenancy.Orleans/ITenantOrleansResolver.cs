@@ -9,9 +9,9 @@ public interface ITenantOrleansResolver<TTenant>
 	where TTenant : class, ITenant
 {
 	/// <summary>
-	/// Resolves the tenant from a grain composite primary key in the format <c>{tenantKey}/{grainKey}</c>.
+	/// Resolves the tenant from an Orleans grain key span in the format <c>tenant/{tenantKey}/{grainId}</c>.
 	/// </summary>
-	/// <param name="primaryKey">The grain composite primary key.</param>
+	/// <param name="grainKey">The Orleans grain key span.</param>
 	/// <returns>The resolved tenant, or <c>null</c> if the key format is invalid.</returns>
-	TTenant? Resolve(string primaryKey);
+	TTenant? Resolve(in IdSpan grainKey);
 }
