@@ -21,7 +21,8 @@ public sealed class MockLoLHeroDataClient : IHeroDataClient
 	/// <summary>Initializes a new instance of <see cref="MockLoLHeroDataClient"/>.</summary>
 	public MockLoLHeroDataClient(
 		ILogger<MockLoLHeroDataClient> logger,
-		IDataClientManager clientManager)
+		IDataClientManager clientManager
+	)
 	{
 		_logger = logger;
 		clientManager.Register(this);
@@ -61,7 +62,8 @@ public sealed class MockHotsHeroDataClient : IHeroDataClient
 	/// <summary>Initializes a new instance of <see cref="MockHotsHeroDataClient"/>.</summary>
 	public MockHotsHeroDataClient(
 		ILogger<MockHotsHeroDataClient> logger,
-		IDataClientManager clientManager)
+		IDataClientManager clientManager
+	)
 	{
 		_logger = logger;
 		clientManager.Register(this);
