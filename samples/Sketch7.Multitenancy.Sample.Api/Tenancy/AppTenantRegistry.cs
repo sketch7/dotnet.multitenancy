@@ -49,8 +49,8 @@ public sealed class AppTenantRegistry : IAppTenantRegistry
 	}
 
 	/// <inheritdoc />
-	public AppTenant Get(string tenant) =>
-		GetOrDefault(tenant) ?? throw new KeyNotFoundException($"Tenant not found for '{tenant}'");
+	public AppTenant Get(string tenant)
+		=> GetOrDefault(tenant) ?? throw new KeyNotFoundException($"Tenant not found for '{tenant}'");
 
 	/// <inheritdoc />
 	public AppTenant? GetOrDefault(string tenant)
@@ -59,6 +59,5 @@ public sealed class AppTenantRegistry : IAppTenantRegistry
 		return brand;
 	}
 
-	/// <inheritdoc />
 	public IEnumerable<AppTenant> GetAll() => _tenants.Values;
 }
