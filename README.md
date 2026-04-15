@@ -240,18 +240,15 @@ builder.Build().Run();
 ### Commands
 
 ```bash
+# run
+npm start
+
 # build
 npm run build
 # or: dotnet build dotnet.multitenancy.slnx -c Release
 
 # run tests
 npm test
-
-# pack NuGet packages
-npm run pack
-
-# publish dev packages
-npm run publish:dev
 ```
 
 ### Coding Conventions
