@@ -52,7 +52,7 @@ public class MultitenancyMiddleware<TTenant>
 public class MultitenancyMiddlewareOptions
 {
 	internal Func<object> InvalidTenantResponse { get; private set; } =
-		static () => new { errorCode = "error.invalid:tenant" };
+		static () => new { errorCode = "error.tenant.invalid" };
 
 	/// <summary>
 	/// Configures the response body returned when tenant resolution fails.
