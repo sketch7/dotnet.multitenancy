@@ -44,21 +44,21 @@ Always use `TenantGrainKey.Create(tenantKey, grainKey)` — the format is `{tena
 
 ## Key Patterns to Reference
 
-| Pattern                         | Exemplary file                                                                                                       |
-| ------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| Keyed DI + proxy generation     | [MultitenancyBuilder.cs](../src/Sketch7.Multitenancy/MultitenancyBuilder.cs)                                         |
-| Minimal API / middleware wiring | [MultitenancyMiddleware.cs](../src/Sketch7.Multitenancy.AspNet/MultitenancyMiddleware.cs)                            |
-| Orleans call filter             | [TenantGrainCallFilter.cs](../src/Sketch7.Multitenancy.Orleans/TenantGrainCallFilter.cs)                             |
-| C# 14 extension blocks          | [MultitenancyServiceCollectionExtensions.cs](../src/Sketch7.Multitenancy/MultitenancyServiceCollectionExtensions.cs) |
-| Record value objects            | [AppTenant.cs](../samples/Sketch7.Multitenancy.Sample.Api/Tenancy/AppTenant.cs)                                      |
-| End-to-end registration         | [samples/.../Program.cs](../samples/Sketch7.Multitenancy.Sample.Api/Program.cs)                                      |
-| xUnit + Shouldly test style     | [MultitenancyBuilderTests.cs](../test/Sketch7.Multitenancy.Tests/MultitenancyBuilderTests.cs)                        |
+| Pattern                         | Exemplary file                                                                                                                                             |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Keyed DI + proxy generation     | [MultitenancyBuilder.cs](../src/Sketch7.Multitenancy/MultitenancyBuilder.cs)                                                                               |
+| Minimal API / middleware wiring | [MultitenancyMiddleware.cs](../src/Sketch7.Multitenancy.AspNet/MultitenancyMiddleware.cs)                                                                  |
+| Orleans call filter             | [TenantGrainCallFilter.cs](../src/Sketch7.Multitenancy.Orleans/TenantGrainCallFilter.cs)                                                                   |
+| C# 14 extension blocks          | [MultitenancyServiceCollectionExtensions.cs](../src/Sketch7.Multitenancy/MultitenancyServiceCollectionExtensions.cs)                                       |
+| Record value objects            | [AppTenant.cs](../samples/Sketch7.Multitenancy.Sample.Api/Tenancy/AppTenant.cs)                                                                            |
+| End-to-end registration         | [samples/.../Program.cs](../samples/Sketch7.Multitenancy.Sample.Api/Program.cs)                                                                            |
+| xUnit + Shouldly test style     | [tests.instructions.md](instructions/tests.instructions.md), [MultitenancyBuilderTests.cs](../test/Sketch7.Multitenancy.Tests/MultitenancyBuilderTests.cs) |
 
 ## Testing
 
-- Framework: **xUnit** with **Shouldly** assertions; integration tests via `Microsoft.AspNetCore.Mvc.Testing`
-- Each test creates a fresh `ServiceProvider` scope and sets the `ITenantAccessor` explicitly — never share scope across tests
-- Run `npm run test` to execute the full suite
+See [tests.instructions.md](instructions/tests.instructions.md) for naming, scope wiring, test doubles, and integration test patterns.
+
+- Run `npm run test` to execute the full suite (excludes e2e)
 
 ## Common Pitfalls
 
