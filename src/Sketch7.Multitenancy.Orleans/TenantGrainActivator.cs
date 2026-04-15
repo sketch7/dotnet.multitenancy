@@ -1,3 +1,4 @@
+using Microsoft.Extensions.DependencyInjection;
 using Orleans.Metadata;
 
 namespace Sketch7.Multitenancy.Orleans;
@@ -9,8 +10,23 @@ namespace Sketch7.Multitenancy.Orleans;
 /// which runs on every incoming grain call.
 /// </summary>
 /// <remarks>
-/// Grains must implement both <see cref="ITenantGrain"/> and <see cref="IWithTenantAccessor{TTenant}"/>
-/// to receive tenant injection; all other grain types are skipped silently.
+/// <para>
+/// Supports two tenant injection patterns simultaneously:
+/// <list type="bullet">
+/// <item><description>
+/// <b>Constructor injection</b> — tenant is set synchronously on <see cref="TenantAccessor{TTenant}"/> in
+/// <see cref="IGrainContext.ActivationServices"/> before the grain instance is created, so tenant-aware
+/// services injected via the constructor (e.g. resolved through the multitenancy proxy) already have the
+/// tenant populated.
+/// </description></item>
+/// <item><description>
+/// <b>Property accessor</b> — grains implementing <see cref="IWithTenantAccessor{TTenant}"/> also receive
+/// the tenant via their <see cref="TenantAccessor{TTenant}"/> property, set in a lifecycle callback after
+/// the grain instance is constructed but before state is loaded.
+/// </description></item>
+/// </list>
+/// </para>
+/// All other grain types are skipped silently.
 /// </remarks>
 /// <typeparam name="TTenant">The tenant type.</typeparam>
 public sealed class TenantGrainActivator<TTenant> : IConfigureGrainContextProvider, IConfigureGrainContext
@@ -37,28 +53,27 @@ public sealed class TenantGrainActivator<TTenant> : IConfigureGrainContextProvid
 	}
 
 	/// <summary>
-	/// Subscribes to the grain lifecycle so that tenant context is injected after the
-	/// grain instance has been created but before state is loaded or the grain activates.
+	/// Sets tenant context via two mechanisms:
+	/// first synchronously in <see cref="IGrainContext.ActivationServices"/> to support constructor injection,
+	/// then via a lifecycle subscription to set <see cref="IWithTenantAccessor{TTenant}.TenantAccessor"/>
+	/// after grain construction for the property accessor pattern.
 	/// </summary>
-	/// <remarks>
-	/// <see cref="IConfigureGrainContext.Configure"/> is called before the grain instance
-	/// object is created, so <see cref="IGrainContext.GrainInstance"/> is <see langword="null"/>
-	/// at this point. Subscribing to <see cref="GrainLifecycleStage.SetupState"/> - 1 defers
-	/// the work to after grain construction but before state is read from storage.
-	/// </remarks>
 	public void Configure(IGrainContext context)
 	{
+		var tenant = _resolver.Resolve(context.GrainId.Key.ToString());
+
+		// Set tenant in ActivationServices before grain construction — enables constructor injection.
+		if (context.ActivationServices.GetService<TenantAccessor<TTenant>>() is { } tenantAccessor)
+			tenantAccessor.Tenant = tenant;
+
+		// Set on IWithTenantAccessor<TTenant> after grain construction — property accessor pattern.
 		context.ObservableLifecycle.Subscribe(
 			nameof(TenantGrainActivator<>),
 			GrainLifecycleStage.SetupState - 1,
 			_ =>
 			{
-				if (context.GrainInstance is ITenantGrain and IWithTenantAccessor<TTenant> withTenantAccessor)
-				{
-					var tenant = _resolver.Resolve(context.GrainId.Key.ToString());
-					if (tenant is not null)
-						withTenantAccessor.TenantAccessor.Tenant = tenant;
-				}
+				if (tenant is not null && context.GrainInstance is IWithTenantAccessor<TTenant> withTenantAccessor)
+					withTenantAccessor.TenantAccessor.Tenant = tenant;
 				return Task.CompletedTask;
 			});
 	}

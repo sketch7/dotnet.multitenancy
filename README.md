@@ -166,11 +166,22 @@ app.UseMultitenancy<AppTenant>(new MultitenancyMiddlewareOptions()
 
 ### 1. Configure the silo
 
+Choose a propagation strategy when configuring the silo:
+
 ```csharp
-siloBuilder.UseMultitenancy<AppTenant>();
+// Option A — once per grain activation (recommended)
+siloBuilder.UseMultitenancy<AppTenant>().WithGrainActivator();
+
+// Option B — on every incoming grain call
+siloBuilder.UseMultitenancy<AppTenant>().WithIncomingCallFilter();
 ```
 
-This registers `TenantGrainCallFilter<T>` as an incoming call filter that automatically populates `ITenantAccessor<T>` for every `ITenantGrain` call.
+| Strategy                   | When tenant is set       | Overhead                                        |
+| -------------------------- | ------------------------ | ----------------------------------------------- |
+| `WithGrainActivator()`     | Once at grain activation | Minimal — set once for the grain lifetime       |
+| `WithIncomingCallFilter()` | Before every grain call  | Per-call — useful when tenant must be refreshed |
+
+`WithGrainActivator()` supports two grain authoring styles — see sections 3a and 3b below.
 
 ### 2. Create tenant-scoped grain keys
 
@@ -191,18 +202,79 @@ if (TenantGrainKey.TryParse(compositeKey, out var tenant, out var grain))
 }
 ```
 
-### 3. Implement a tenant-aware grain
+### 3a. Grain with constructor injection (recommended)
+
+`WithGrainActivator()` sets `TenantAccessor<T>` in the grain's `ActivationServices` scope **before** the
+grain instance is constructed. Tenant-aware services (e.g. `IHeroDataClient` resolved via the multitenancy
+proxy) can therefore be injected directly into the constructor — no scope factories or property accessors needed.
 
 ```csharp
-public sealed class HeroGrain : Grain, IHeroGrain, IWithTenantAccessor<AppTenant>
+public sealed class HeroGrain : Grain, IHeroGrain
 {
+    private readonly IHeroDataClient _heroDataClient;
+    private readonly IPersistentState<HeroGrainState> _state;
+
+    public HeroGrain(
+        IHeroDataClient heroDataClient,
+        [PersistentState("heroes", "heroes")]
+        IPersistentState<HeroGrainState> state
+    )
+    {
+        _heroDataClient = heroDataClient;
+        _state = state;
+    }
+
+    public Task<string> GetTenantKeyAsync()
+        => Task.FromResult(TenantGrainKey.GetTenantKey(this.GetPrimaryKeyString()));
+
+    public async Task<List<Hero>> GetAllAsync()
+    {
+        if (_state.State.Heroes.Count == 0)
+        {
+            _state.State.Heroes = await _heroDataClient.GetAll();
+            await _state.WriteStateAsync();
+        }
+        return _state.State.Heroes;
+    }
+}
+```
+
+### 3b. Grain with property accessor (`IWithTenantAccessor`)
+
+Alternatively, implement `IWithTenantAccessor<T>`. The activator sets `TenantAccessor.Tenant` after grain
+construction via a lifecycle callback. Use this when you need to read the tenant object directly inside grain
+methods (e.g. to branch on tenant properties):
+
+```csharp
+public sealed class HeroTypeGrain : Grain, IHeroTypeGrain, IWithTenantAccessor<AppTenant>
+{
+    private readonly IHeroDataClient _heroDataClient;
+    private readonly IPersistentState<HeroTypeGrainState> _state;
+
+    public HeroTypeGrain(
+        IHeroDataClient heroDataClient,
+        [PersistentState("hero-types", "heroes")]
+        IPersistentState<HeroTypeGrainState> state
+    )
+    {
+        _heroDataClient = heroDataClient;
+        _state = state;
+    }
+
     public TenantAccessor<AppTenant> TenantAccessor { get; } = new();
 
     public Task<string> GetTenantKeyAsync()
         => Task.FromResult(TenantGrainKey.GetTenantKey(this.GetPrimaryKeyString()));
 
-    [AlwaysInterleave]
-    public Task<List<Hero>> GetAllAsync() => Task.FromResult(State.Heroes);
+    public async Task<List<HeroType>> GetAllAsync()
+    {
+        if (_state.State.HeroTypes.Count == 0)
+        {
+            _state.State.HeroTypes = await _heroDataClient.GetAllHeroTypes();
+            await _state.WriteStateAsync();
+        }
+        return _state.State.HeroTypes;
+    }
 }
 ```
 
