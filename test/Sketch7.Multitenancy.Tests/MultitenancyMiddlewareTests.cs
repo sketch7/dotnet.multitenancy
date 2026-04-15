@@ -136,7 +136,7 @@ public class MultitenancyMiddlewareTests
 /// <summary>
 /// A simple resolver that always returns the provided tenant.
 /// </summary>
-file class StaticTenantResolver<TTenant> : ITenantHttpResolver<TTenant>
+file sealed class StaticTenantResolver<TTenant> : ITenantHttpResolver<TTenant>
 	where TTenant : class, ITenant
 {
 	private readonly TTenant? _tenant;

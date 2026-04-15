@@ -277,17 +277,17 @@ public class MultitenancyBuilderTests
 
 // ---- Test doubles ----
 
-public class TestTenant : ITenant
+public record TestTenant : ITenant
 {
-	public string Key { get; set; } = "test";
-	public string Organization { get; set; } = string.Empty;
+	public string Key { get; init; } = "test";
+	public string Organization { get; init; } = string.Empty;
 }
 
 public interface ITestService { }
-public class TestServiceA : ITestService { }
-public class TestServiceB : ITestService { }
+public sealed class TestServiceA : ITestService { }
+public sealed class TestServiceB : ITestService { }
 
-public class TestTenantRegistry : ITenantRegistry<TestTenant>
+public sealed class TestTenantRegistry : ITenantRegistry<TestTenant>
 {
 	private readonly Dictionary<string, TestTenant> _tenants = new()
 	{
