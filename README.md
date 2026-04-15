@@ -146,7 +146,8 @@ builder.Services
             .For("hots", s => s.AddScoped<IHeroDataClient, HotsHeroDataClient>())
             // by predicate (requires WithRegistry or WithTenants)
             .For(t => t.Organization == "riot", s => s
-                .AddScoped<IHeroDataClient, LoLHeroDataClient>())
+              .AddScoped<IHeroDataClient, LoLHeroDataClient>()
+            )
             // same service for every tenant
             .ForAll(s => s.AddScoped<IAuditLogger, DefaultAuditLogger>())
         )
