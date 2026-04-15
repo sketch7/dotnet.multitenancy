@@ -1,3 +1,4 @@
+using Orleans.Concurrency;
 using Sketch7.Multitenancy.Orleans;
 using Sketch7.Multitenancy.Sample.Api.Tenancy;
 
@@ -12,6 +13,23 @@ public sealed class HeroGrainState
 	/// <summary>Gets or sets the cached hero list for this tenant.</summary>
 	[Id(0)]
 	public List<Hero> Heroes { get; set; } = [];
+}
+
+/// <summary>
+/// Tenant-scoped grain that provides hero data for a single tenant.
+/// Primary key format: <c>{tenantKey}/heroes</c> — see <see cref="TenantGrainKey"/>.
+/// </summary>
+public interface IHeroGrain : IGrainWithStringKey, ITenantGrain
+{
+	/// <summary>Gets all heroes for this tenant.</summary>
+	[AlwaysInterleave]
+	[return: Immutable]
+	Task<List<Hero>> GetAllAsync();
+
+	/// <summary>Gets a hero by key, or <c>null</c> if not found.</summary>
+	[AlwaysInterleave]
+	[return: Immutable]
+	Task<Hero?> GetByKeyAsync(string heroKey);
 }
 
 /// <summary>

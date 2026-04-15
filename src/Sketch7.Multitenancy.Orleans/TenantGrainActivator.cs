@@ -1,5 +1,4 @@
 using Orleans.Metadata;
-using Orleans.Runtime;
 
 namespace Sketch7.Multitenancy.Orleans;
 
@@ -50,7 +49,7 @@ public sealed class TenantGrainActivator<TTenant> : IConfigureGrainContextProvid
 	public void Configure(IGrainContext context)
 	{
 		context.ObservableLifecycle.Subscribe(
-			nameof(TenantGrainActivator<TTenant>),
+			nameof(TenantGrainActivator<>),
 			GrainLifecycleStage.SetupState - 1,
 			_ =>
 			{
