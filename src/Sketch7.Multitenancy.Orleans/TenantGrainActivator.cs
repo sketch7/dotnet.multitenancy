@@ -33,21 +33,33 @@ public sealed class TenantGrainActivator<TTenant> : IConfigureGrainContextProvid
 	where TTenant : class, ITenant
 {
 	private readonly ITenantOrleansResolver<TTenant> _resolver;
+	private readonly GrainClassMap _grainClassMap;
 
 	/// <summary>
 	/// Initializes a new instance of <see cref="TenantGrainActivator{TTenant}"/>.
 	/// </summary>
-	public TenantGrainActivator(ITenantOrleansResolver<TTenant> resolver)
+	public TenantGrainActivator(
+		ITenantOrleansResolver<TTenant> resolver,
+		GrainClassMap grainClassMap
+	)
 	{
 		_resolver = resolver;
+		_grainClassMap = grainClassMap;
 	}
 
 	/// <summary>
-	/// Returns <see langword="this"/> as the configurator for all grain types.
-	/// Filtering by grain type is deferred to <see cref="Configure"/> to avoid per-type metadata lookups.
+	/// Returns <see langword="this"/> as the configurator only for grain types that implement <see cref="ITenantGrain"/>.
+	/// <see cref="GrainClassMap"/> resolves the CLR type from the Orleans grain type registry, avoiding assembly scanning.
 	/// </summary>
 	public bool TryGetConfigurator(GrainType grainType, GrainProperties properties, out IConfigureGrainContext configurator)
 	{
+		if (!_grainClassMap.TryGetGrainClass(grainType, out var grainClass)
+			|| !typeof(ITenantGrain).IsAssignableFrom(grainClass))
+		{
+			configurator = null!;
+			return false;
+		}
+
 		configurator = this;
 		return true;
 	}
@@ -72,7 +84,7 @@ public sealed class TenantGrainActivator<TTenant> : IConfigureGrainContextProvid
 			GrainLifecycleStage.SetupState - 1,
 			_ =>
 			{
-				if (tenant is not null && context.GrainInstance is IWithTenantAccessor<TTenant> withTenantAccessor)
+				if (context.GrainInstance is IWithTenantAccessor<TTenant> withTenantAccessor)
 					withTenantAccessor.TenantAccessor.Tenant = tenant;
 				return Task.CompletedTask;
 			});
