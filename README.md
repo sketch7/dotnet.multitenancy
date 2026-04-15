@@ -7,12 +7,10 @@ Multi-tenancy library for .NET 10 (C# 14) using native Microsoft DI keyed servic
 ## Features
 
 - Tenant resolution per HTTP request via a simple resolver interface
-- Per-tenant service registration using Microsoft DI keyed services
-- Transparent unkeyed proxy — inject `IHeroDataClient` and get the right implementation for the current tenant automatically
-- Predicate-based bulk registration across matching tenants
+- Per-tenant service registration using native Microsoft DI keyed services — no third-party containers
+- Transparent unkeyed proxy — controllers and handlers stay unaware of multitenancy; inject `IMyService` and get the right tenant implementation automatically
+- Fluent builder with by-key, predicate, and all-tenants registration
 - Microsoft Orleans support — tenant-scoped grain keys and a call filter that propagates tenant context
-- Aspire-ready (`ServiceDefaults` integration)
-- C# 14 extension blocks used throughout
 
 ## Packages
 
@@ -50,8 +48,8 @@ public sealed class AppTenantRegistry : IAppTenantRegistry
         new() { Key = "hots", Name = "Heroes of the Storm", Organization = "blizzard" },
     ];
 
-    public AppTenant Get(string key) =>
-        GetOrDefault(key) ?? throw new KeyNotFoundException($"Tenant '{key}' not found.");
+    public AppTenant Get(string key)
+        => GetOrDefault(key) ?? throw new KeyNotFoundException($"Tenant '{key}' not found.");
 
     public AppTenant? GetOrDefault(string key)
         => _tenants.FirstOrDefault(t => t.Key == key);
@@ -67,15 +65,20 @@ public sealed class AppTenantRegistry : IAppTenantRegistry
 var tenantRegistry = new AppTenantRegistry();
 
 builder.Services
-    .AddSingleton<AppTenantRegistry>(tenantRegistry)
-    .AddMultitenancy<AppTenant>()
-    .WithHttpResolver<AppTenant, AppTenantHttpResolver>()
-    .WithTenants(tenantRegistry.GetAll())
-    // Register different IHeroDataClient implementations per tenant group
-    .ForTenants(t => t.Organization == "riot",
-        s => s.AddScoped<IHeroDataClient, LoLHeroDataClient>())
-    .ForTenants(t => t.Organization == "blizzard",
-        s => s.AddScoped<IHeroDataClient, HotsHeroDataClient>());
+    .AddSingleton<AppTenantRegistry>(tenantRegistry);
+
+builder.Services
+    .AddMultitenancy<AppTenant>(opts => opts
+        .WithRegistry(tenantRegistry)
+        .WithHttpResolver<AppTenant, AppTenantHttpResolver>()
+        .WithServices(tsb => tsb
+            // Register different IHeroDataClient implementations per tenant group
+            .For(t => t.Organization == "riot", s => s
+                .AddScoped<IHeroDataClient, LoLHeroDataClient>())
+            .For(t => t.Organization == "blizzard", s => s
+                .AddScoped<IHeroDataClient, HotsHeroDataClient>())
+        )
+    );
 ```
 
 ### 4. Implement the HTTP resolver
@@ -87,7 +90,8 @@ public sealed class AppTenantHttpResolver : ITenantHttpResolver<AppTenant>
 {
     private readonly AppTenantRegistry _registry;
 
-    public AppTenantHttpResolver(AppTenantRegistry registry) => _registry = registry;
+    public AppTenantHttpResolver(AppTenantRegistry registry)
+        => _registry = registry;
 
     public Task<AppTenant?> Resolve(HttpContext httpContext)
     {
@@ -106,7 +110,7 @@ app.UseMultitenancy<AppTenant>();
 app.MapControllers();
 ```
 
-When tenant resolution fails the middleware returns `400 Bad Request` with `{"errorCode":"error.invalid:tenant"}`.
+When tenant resolution fails the middleware returns `400 Bad Request` with `{"errorCode":"error.tenant.invalid"}`.
 
 ---
 
@@ -128,25 +132,28 @@ app.MapGet("/tenant", (ITenantAccessor<AppTenant> tenantAccessor) =>
     TypedResults.Ok(tenantAccessor.Tenant?.Name ?? "unknown"));
 ```
 
-### Register services for a specific tenant by key
+### Configure per-tenant services
+
+All per-tenant registrations live inside `WithServices`. You can mix by-key, predicate, and all-tenants registrations in any order:
 
 ```csharp
 builder.Services
-    .AddMultitenancy<AppTenant>()
-    .ForTenant("lol", s => s.AddScoped<IHeroDataClient, LoLHeroDataClient>())
-    .ForTenant("hots", s => s.AddScoped<IHeroDataClient, HotsHeroDataClient>());
+    .AddMultitenancy<AppTenant>(opts => opts
+        .WithRegistry(tenantRegistry)   // makes tenants available for predicates
+        .WithServices(tsb => tsb
+            // by exact key
+            .For("lol", s => s.AddScoped<IHeroDataClient, LoLHeroDataClient>())
+            .For("hots", s => s.AddScoped<IHeroDataClient, HotsHeroDataClient>())
+            // by predicate (requires WithRegistry or WithTenants)
+            .For(t => t.Organization == "riot", s => s
+                .AddScoped<IHeroDataClient, LoLHeroDataClient>())
+            // same service for every tenant
+            .ForAll(s => s.AddScoped<IAuditLogger, DefaultAuditLogger>())
+        )
+    );
 ```
 
-### Register the same services for all tenants
-
-```csharp
-builder.Services
-    .AddMultitenancy<AppTenant>()
-    .WithTenants(tenantRegistry.GetAll())
-    .ForAllTenants(s => s.AddScoped<IAuditLogger, DefaultAuditLogger>());
-```
-
-### Customise the invalid-tenant response
+### Customize the invalid-tenant response
 
 ```csharp
 app.UseMultitenancy<AppTenant>(new MultitenancyMiddlewareOptions()
@@ -187,7 +194,7 @@ if (TenantGrainKey.TryParse(compositeKey, out var tenant, out var grain))
 ### 3. Implement a tenant-aware grain
 
 ```csharp
-public sealed class HeroGrain : Grain, IHeroGrain, IHasTenantAccessor<AppTenant>
+public sealed class HeroGrain : Grain, IHeroGrain, IWithTenantAccessor<AppTenant>
 {
     public TenantAccessor<AppTenant> TenantAccessor { get; } = new();
 
@@ -213,51 +220,3 @@ public interface IHeroGrain : IGrainWithStringKey, ITenantGrain
     Task<Hero?> GetByKeyAsync(string heroKey);
 }
 ```
-
----
-
-## Aspire Integration
-
-The sample uses `Sketch7.Multitenancy.ServiceDefaults` which wires up OpenTelemetry traces/metrics and health checks via a single `AddServiceDefaults()` / `MapDefaultEndpoints()` call (standard Aspire pattern).
-
-```csharp
-// AppHost/Program.cs
-var builder = DistributedApplication.CreateBuilder(args);
-var api = builder.AddProject<Projects.Sketch7_Multitenancy_Sample_Api>("api");
-builder.Build().Run();
-```
-
----
-
-## Contributing
-
-### Setup
-
-- [.NET 10 SDK](https://dotnet.microsoft.com/download)
-- NodeJS (for npm scripts)
-
-### Commands
-
-```bash
-# run
-npm start
-
-# build
-npm run build
-# or: dotnet build dotnet.multitenancy.slnx -c Release
-
-# run tests
-npm test
-```
-
-### Coding Conventions
-
-- **Target framework**: `net10.0` with C# 14 (`<LangVersion>latest</LangVersion>`)
-- **Nullable**: enabled; no `!` suppressions without comment
-- **Extension members**: always use C# 14 `extension(...)` blocks; never the `static ... this` style
-  - Exception: methods with both a generic receiver type *and* method-level generic type params (current SDK 10.0.x limitation)
-- **Value objects / models**: use `record` for immutable data, `sealed class` for mutable state grains
-- **Never leave warnings**: handle all warnings; no `#pragma warning disable`
-- **Formatting**: respect `.editorconfig`; run `dotnet format` before submitting
-- **Generic constraint**: always `where TTenant : class, ITenant`
-- **Orleans grains**: follow the checklist in [`ITenantGrain`](src/Sketch7.Multitenancy.Orleans/ITenantGrain.cs) — `[AlwaysInterleave]` on reads, `[return: Immutable]` on collections, `[GenerateSerializer]` + `[Id(n)]` on state types

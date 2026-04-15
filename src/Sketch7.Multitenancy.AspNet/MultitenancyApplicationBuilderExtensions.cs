@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Sketch7.Multitenancy.AspNet;
 
@@ -20,25 +19,5 @@ public static class MultitenancyApplicationBuilderExtensions
 			MultitenancyMiddlewareOptions? options = null)
 			where TTenant : class, ITenant
 			=> app.UseMiddleware<MultitenancyMiddleware<TTenant>>(options ?? new MultitenancyMiddlewareOptions());
-	}
-}
-
-/// <summary>
-/// Extension members for registering ASP.NET Core multitenancy services on <see cref="MultitenancyBuilder{TTenant}"/>.
-/// </summary>
-public static class AspNetMultitenancyBuilderExtensions
-{
-	/// <summary>
-	/// Registers the HTTP-based tenant resolver.
-	/// </summary>
-	/// <typeparam name="TTenant">The tenant type.</typeparam>
-	/// <typeparam name="TResolver">The resolver implementation type.</typeparam>
-	/// <param name="builder">The multitenancy builder.</param>
-	public static MultitenancyBuilder<TTenant> WithHttpResolver<TTenant, TResolver>(this MultitenancyBuilder<TTenant> builder)
-		where TTenant : class, ITenant
-		where TResolver : class, ITenantHttpResolver<TTenant>
-	{
-		builder.Services.AddScoped<ITenantHttpResolver<TTenant>, TResolver>();
-		return builder;
 	}
 }

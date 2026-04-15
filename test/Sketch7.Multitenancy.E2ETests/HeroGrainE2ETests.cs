@@ -51,14 +51,11 @@ public sealed class AspireFixture : IAsyncLifetime
 /// </summary>
 /// <remarks>Requires Docker. Excluded from the standard test run — use <c>dotnet test test/Sketch7.Multitenancy.E2ETests/</c>.</remarks>
 [Trait("Category", "e2e")]
-public class HeroGrainE2ETests : IClassFixture<AspireFixture>
+public class HeroGrainE2ETests(
+	AspireFixture fixture
+) : IClassFixture<AspireFixture>
 {
-	private readonly DistributedApplication _app;
-
-	public HeroGrainE2ETests(AspireFixture fixture)
-	{
-		_app = fixture.App;
-	}
+	private readonly DistributedApplication _app = fixture.App;
 
 	[Fact]
 	public async Task GetHeroes_LoLTenant_ReturnsLoLHeroes()

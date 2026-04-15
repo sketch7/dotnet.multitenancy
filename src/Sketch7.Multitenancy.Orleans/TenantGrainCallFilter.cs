@@ -11,14 +11,15 @@ public class TenantGrainCallFilter<TTenant> : IIncomingGrainCallFilter
 	where TTenant : class, ITenant
 {
 	private readonly ITenantRegistry<TTenant> _registry;
-	private readonly ILogger<TenantGrainCallFilter<TTenant>> _logger;
+	private readonly ILogger _logger;
 
 	/// <summary>
 	/// Initializes a new instance of <see cref="TenantGrainCallFilter{TTenant}"/>.
 	/// </summary>
 	public TenantGrainCallFilter(
 		ITenantRegistry<TTenant> registry,
-		ILogger<TenantGrainCallFilter<TTenant>> logger)
+		ILogger<TenantGrainCallFilter<TTenant>> logger
+	)
 	{
 		_registry = registry;
 		_logger = logger;
@@ -27,33 +28,31 @@ public class TenantGrainCallFilter<TTenant> : IIncomingGrainCallFilter
 	/// <inheritdoc />
 	public async Task Invoke(IIncomingGrainCallContext context)
 	{
-		// Only applies to tenant-aware grains
-		if (context.Grain is ITenantGrain && context.Grain is IAddressable addressable)
+		SetTenantContext(context);
+		await context.Invoke();
+	}
+
+	private void SetTenantContext(IIncomingGrainCallContext context)
+	{
+		if (context.Grain is not (ITenantGrain and IAddressable addressable))
+			return;
+
+		var primaryKey = addressable.GetPrimaryKeyString();
+
+		if (!TenantGrainKey.TryParse(primaryKey, out var tenantKey, out _) || tenantKey == null)
 		{
-			// Extract the tenant key from the composite primary key
-			var primaryKey = addressable.GetPrimaryKeyString();
-
-			if (TenantGrainKey.TryParse(primaryKey, out var tenantKey, out _) && tenantKey != null)
-			{
-				var tenant = _registry.Get(tenantKey);
-				if (tenant == null)
-				{
-					_logger.LogWarning("Grain {GrainType} has tenant key '{TenantKey}' which was not found in the registry.",
-						context.Grain.GetType().Name, tenantKey);
-				}
-
-				// If the grain also exposes a tenant accessor, set the tenant
-				if (context.Grain is IHasTenantAccessor<TTenant> hasTenantAccessor)
-					hasTenantAccessor.TenantAccessor.Tenant = tenant;
-			}
-			else
-			{
-				_logger.LogWarning("Grain {GrainType} has an invalid primary key format for tenant extraction: '{PrimaryKey}'.",
-					context.Grain.GetType().Name, primaryKey);
-			}
+			_logger.LogWarning(
+				"Grain {GrainType} has an invalid primary key format for tenant extraction: '{PrimaryKey}'.",
+				context.Grain.GetType().Name,
+				primaryKey
+			);
+			return;
 		}
 
-		await context.Invoke();
+		var tenant = _registry.Get(tenantKey);
+
+		if (context.Grain is IWithTenantAccessor<TTenant> withTenantAccessor)
+			withTenantAccessor.TenantAccessor.Tenant = tenant;
 	}
 }
 
@@ -61,7 +60,7 @@ public class TenantGrainCallFilter<TTenant> : IIncomingGrainCallFilter
 /// Opt-in interface for grains that want the <see cref="ITenantAccessor{TTenant}"/> populated by the call filter.
 /// </summary>
 /// <typeparam name="TTenant">The tenant type.</typeparam>
-public interface IHasTenantAccessor<TTenant>
+public interface IWithTenantAccessor<TTenant>
 	where TTenant : class, ITenant
 {
 	/// <summary>
