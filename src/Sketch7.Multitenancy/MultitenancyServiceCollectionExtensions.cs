@@ -20,6 +20,7 @@ public static class MultitenancyServiceCollectionExtensions
 		{
 			services.AddScoped<TenantAccessor<TTenant>>();
 			services.AddScoped<ITenantAccessor<TTenant>>(sp => sp.GetRequiredService<TenantAccessor<TTenant>>());
+			services.AddScoped<ITenantAccessor>(sp => sp.GetRequiredService<TenantAccessor<TTenant>>());
 
 			var builder = new MultitenancyBuilder<TTenant>(services);
 			configure?.Invoke(builder);

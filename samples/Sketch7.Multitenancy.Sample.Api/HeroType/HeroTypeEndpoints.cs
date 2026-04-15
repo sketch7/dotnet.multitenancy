@@ -1,5 +1,4 @@
 using Sketch7.Multitenancy.Orleans;
-using Sketch7.Multitenancy.Sample.Api.Tenancy;
 
 namespace Sketch7.Multitenancy.Sample.Api.HeroType;
 
@@ -14,7 +13,7 @@ public static class HeroTypeEndpoints
 			var group = app.MapGroup("/api/hero-types")
 				.WithTags("HeroTypes");
 
-			group.MapGet("/", async (IGrainFactory grainFactory, ITenantAccessor<AppTenant> tenantAccessor) =>
+			group.MapGet("/", async (IGrainFactory grainFactory, ITenantAccessor tenantAccessor) =>
 			{
 				var grain = GetHeroTypeGrain(grainFactory, tenantAccessor);
 				var heroTypes = await grain.GetAllAsync();
@@ -28,7 +27,7 @@ public static class HeroTypeEndpoints
 		}
 	}
 
-	private static IHeroTypeGrain GetHeroTypeGrain(IGrainFactory grainFactory, ITenantAccessor<AppTenant> tenantAccessor)
+	private static IHeroTypeGrain GetHeroTypeGrain(IGrainFactory grainFactory, ITenantAccessor tenantAccessor)
 	{
 		// Tenant is guaranteed non-null here: middleware returns 400 before reaching this handler.
 		var grainKey = TenantGrainKey.Create(tenantAccessor.Tenant!.Key, "hero-types");
