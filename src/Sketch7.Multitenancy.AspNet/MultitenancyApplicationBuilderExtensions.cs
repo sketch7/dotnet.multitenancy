@@ -28,17 +28,17 @@ public static class MultitenancyApplicationBuilderExtensions
 /// </summary>
 public static class AspNetMultitenancyBuilderExtensions
 {
-	/// <summary>
-	/// Registers the HTTP-based tenant resolver.
-	/// </summary>
-	/// <typeparam name="TTenant">The tenant type.</typeparam>
-	/// <typeparam name="TResolver">The resolver implementation type.</typeparam>
-	/// <param name="builder">The multitenancy builder.</param>
-	public static MultitenancyBuilder<TTenant> WithHttpResolver<TTenant, TResolver>(this MultitenancyBuilder<TTenant> builder)
-		where TTenant : class, ITenant
-		where TResolver : class, ITenantHttpResolver<TTenant>
+	extension<TTenant>(MultitenancyBuilder<TTenant> builder) where TTenant : class, ITenant
 	{
-		builder.Services.AddScoped<ITenantHttpResolver<TTenant>, TResolver>();
-		return builder;
+		/// <summary>
+		/// Registers the HTTP-based tenant resolver.
+		/// </summary>
+		/// <typeparam name="TResolver">The resolver implementation type.</typeparam>
+		public MultitenancyBuilder<TTenant> WithHttpResolver<TResolver>()
+			where TResolver : class, ITenantHttpResolver<TTenant>
+		{
+			builder.Services.AddScoped<ITenantHttpResolver<TTenant>, TResolver>();
+			return builder;
+		}
 	}
 }
