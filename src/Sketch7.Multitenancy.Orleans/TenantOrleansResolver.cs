@@ -11,7 +11,7 @@ public sealed class TenantOrleansResolver<TTenant> : ITenantOrleansResolver<TTen
 	where TTenant : class, ITenant
 {
 	private readonly ITenantRegistry<TTenant> _registry;
-	private readonly ILogger<TenantOrleansResolver<TTenant>> _logger;
+	private readonly ILogger _logger;
 
 	/// <summary>
 	/// Initializes a new instance of <see cref="TenantOrleansResolver{TTenant}"/>.
@@ -30,9 +30,7 @@ public sealed class TenantOrleansResolver<TTenant> : ITenantOrleansResolver<TTen
 	{
 		if (!TenantGrainKey.TryParse(primaryKey, out var tenantKey, out _) || tenantKey == null)
 		{
-			_logger.LogWarning(
-				"Could not extract tenant key from grain primary key '{PrimaryKey}'.",
-				primaryKey);
+			_logger.LogWarning("Could not extract tenant key from grain primary key '{PrimaryKey}'.", primaryKey);
 			return null;
 		}
 
