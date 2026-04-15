@@ -82,6 +82,39 @@ public class MultitenancyBuilderTests
 	}
 
 	[Fact]
+	public void WithServices_For_SingletonTenantServicesAreSupported()
+	{
+		// Arrange
+		var services = new ServiceCollection();
+		services.AddMultitenancy<TestTenant>(opts => opts
+			.WithServices(tsb => tsb
+				.For("tenant-a", s => s.AddSingleton<ITestService, TestServiceA>())
+				.For("tenant-b", s => s.AddSingleton<ITestService, TestServiceB>())));
+
+		var provider = services.BuildServiceProvider();
+
+		// Resolve from two separate scopes to verify singleton returns the same instance
+		using var scopeA1 = provider.CreateScope();
+		scopeA1.ServiceProvider.GetRequiredService<TenantAccessor<TestTenant>>().Tenant = new TestTenant { Key = "tenant-a" };
+		var serviceA1 = scopeA1.ServiceProvider.GetRequiredService<ITestService>();
+
+		using var scopeA2 = provider.CreateScope();
+		scopeA2.ServiceProvider.GetRequiredService<TenantAccessor<TestTenant>>().Tenant = new TestTenant { Key = "tenant-a" };
+		var serviceA2 = scopeA2.ServiceProvider.GetRequiredService<ITestService>();
+
+		using var scopeB = provider.CreateScope();
+		scopeB.ServiceProvider.GetRequiredService<TenantAccessor<TestTenant>>().Tenant = new TestTenant { Key = "tenant-b" };
+		var serviceB = scopeB.ServiceProvider.GetRequiredService<ITestService>();
+
+		// Assert - correct types per tenant
+		serviceA1.ShouldBeOfType<TestServiceA>();
+		serviceB.ShouldBeOfType<TestServiceB>();
+
+		// Assert - singleton: same tenant resolves the same instance across scopes
+		serviceA1.ShouldBeSameAs(serviceA2);
+	}
+
+	[Fact]
 	public void Proxy_ThrowsWhenNoTenantIsSet()
 	{
 		// Arrange
