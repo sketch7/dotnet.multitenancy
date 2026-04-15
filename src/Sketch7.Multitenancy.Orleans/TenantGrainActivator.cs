@@ -6,8 +6,7 @@ namespace Sketch7.Multitenancy.Orleans;
 /// <summary>
 /// Configures tenant context on grain instances at activation time by implementing
 /// <see cref="IConfigureGrainContextProvider"/> and <see cref="IConfigureGrainContext"/>.
-/// Runs once per grain instance creation — unlike <see cref="TenantGrainCallFilter{TTenant}"/>
-/// which runs on every incoming grain call.
+/// Runs once per grain instance creation.
 /// </summary>
 /// <remarks>
 /// <para>

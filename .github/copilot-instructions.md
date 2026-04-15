@@ -48,7 +48,7 @@ Always use `TenantGrainKey.Create(tenantKey, grainKey)` — the format is `{tena
 | ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Keyed DI + proxy generation     | [MultitenancyBuilder.cs](../src/Sketch7.Multitenancy/MultitenancyBuilder.cs)                                                                               |
 | Minimal API / middleware wiring | [MultitenancyMiddleware.cs](../src/Sketch7.Multitenancy.AspNet/MultitenancyMiddleware.cs)                                                                  |
-| Orleans call filter             | [TenantGrainCallFilter.cs](../src/Sketch7.Multitenancy.Orleans/TenantGrainCallFilter.cs)                                                                   |
+| Orleans grain activator         | [TenantGrainActivator.cs](../src/Sketch7.Multitenancy.Orleans/TenantGrainActivator.cs)                                                                     |
 | C# 14 extension blocks          | [MultitenancyServiceCollectionExtensions.cs](../src/Sketch7.Multitenancy/MultitenancyServiceCollectionExtensions.cs)                                       |
 | Record value objects            | [AppTenant.cs](../samples/Sketch7.Multitenancy.Sample.Api/Tenancy/AppTenant.cs)                                                                            |
 | End-to-end registration         | [samples/.../Program.cs](../samples/Sketch7.Multitenancy.Sample.Api/Program.cs)                                                                            |

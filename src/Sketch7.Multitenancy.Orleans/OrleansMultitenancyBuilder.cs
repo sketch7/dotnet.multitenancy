@@ -18,22 +18,8 @@ public sealed class OrleansMultitenancyBuilder<TTenant>
 	}
 
 	/// <summary>
-	/// Registers <see cref="TenantGrainCallFilter{TTenant}"/> as an incoming grain call filter.
-	/// The filter runs on every incoming grain call, setting the tenant from the grain primary key.
-	/// Use this when tenant context must be refreshed on each call (e.g. grains shared across tenants).
-	/// </summary>
-	/// <returns>The same builder for chaining.</returns>
-	public OrleansMultitenancyBuilder<TTenant> WithIncomingCallFilter()
-	{
-		_builder.ConfigureServices(services =>
-			services.AddSingleton<IIncomingGrainCallFilter, TenantGrainCallFilter<TTenant>>());
-		return this;
-	}
-
-	/// <summary>
 	/// Registers <see cref="TenantGrainActivator{TTenant}"/> to inject tenant context once per grain activation.
-	/// Unlike <see cref="WithIncomingCallFilter"/>, context is set exactly once when the grain instance is created
-	/// and remains for the grain's lifetime.
+	/// Context is set exactly once when the grain instance is created and remains for the grain's lifetime.
 	/// </summary>
 	/// <returns>The same builder for chaining.</returns>
 	public OrleansMultitenancyBuilder<TTenant> WithGrainActivator()

@@ -15,7 +15,7 @@ public static class OrleansMultitenancyExtensions
 		/// <typeparam name="TTenant">The tenant type.</typeparam>
 		/// <returns>
 		/// An <see cref="OrleansMultitenancyBuilder{TTenant}"/> — chain
-		/// <c>.WithIncomingCallFilter()</c> or <c>.WithGrainActivator()</c> to complete configuration.
+		/// <c>.WithGrainActivator()</c> to complete configuration.
 		/// </returns>
 		public OrleansMultitenancyBuilder<TTenant> UseMultitenancy<TTenant>()
 			where TTenant : class, ITenant
