@@ -252,7 +252,7 @@ public interface IHeroGrain : IGrainWithStringKey, ITenantGrain
 
 ### `IWithTenantAccessor<TTenant>` — receiving tenant context from the grain activator
 
-The `TenantGrainCallFilter<TTenant>` automatically populates the grain's `TenantAccessor.Tenant` before each call — but only when the grain implements `IWithTenantAccessor<TTenant>`. Add a public auto-property of type `TenantAccessor<TTenant>` to opt in:
+The `TenantGrainActivator<TTenant>` automatically populates the grain's `TenantAccessor.Tenant` when the grain is activated — but only when the grain implements `IWithTenantAccessor<TTenant>`. Add a public auto-property of type `TenantAccessor<TTenant>` to opt in:
 
 ```csharp
 public sealed class HeroGrain : Grain, IHeroGrain, IWithTenantAccessor<AppTenant>
