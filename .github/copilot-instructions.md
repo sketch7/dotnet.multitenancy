@@ -142,7 +142,7 @@ Always use `TenantGrainKey.Create(tenantKey, grainKey)` — the format is `{tena
 ### Orleans Grain Best Practices
 
 - Grain interfaces: extend `IGrainWithStringKey` + `ITenantGrain`; add `[AlwaysInterleave]` to read-only methods; add `[return: Immutable]` to methods returning collections/complex types
-- Grain classes: implement `IHasTenantAccessor<TTenant>` with `TenantAccessor<TTenant>` property; use `[StorageProvider]` + `Grain<TState>` for persistence; mark as `sealed`
+- Grain classes: implement `IWithTenantAccessor<TTenant>` with `TenantAccessor<TTenant>` property; use `[StorageProvider]` + `Grain<TState>` for persistence; mark as `sealed`
 - State types: `[GenerateSerializer]` + `[Id(n)]` starting at `0` on every property; use `sealed class` (mutable state)
 
 ## Key Patterns to Reference

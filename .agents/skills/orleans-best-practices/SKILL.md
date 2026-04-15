@@ -1,6 +1,6 @@
 ---
 name: orleans-best-practices
-description: "Microsoft Orleans best practices for this codebase. Use when writing or reviewing grain interfaces, grain implementations, serialization attributes, concurrency attributes, grain key strategies, storage providers, or tenant-scoped grain patterns. Use for [Immutable], [return: Immutable], [GenerateSerializer], [AlwaysInterleave], [OneWay], [StatelessWorker], [Reentrant], ITenantGrain, IHasTenantAccessor, TenantGrainKey, and StorageProvider patterns."
+description: "Microsoft Orleans best practices for this codebase. Use when writing or reviewing grain interfaces, grain implementations, serialization attributes, concurrency attributes, grain key strategies, storage providers, or tenant-scoped grain patterns. Use for [Immutable], [return: Immutable], [GenerateSerializer], [AlwaysInterleave], [OneWay], [StatelessWorker], [Reentrant], ITenantGrain, IWithTenantAccessor, TenantGrainKey, and StorageProvider patterns."
 ---
 
 # Orleans Best Practices
@@ -194,7 +194,7 @@ public sealed class HeroGrain : Grain, IHeroGrain
 Inject `IPersistentState<TState>` into the constructor with `[PersistentState("stateName", "providerName")]`. This is the **recommended** approach in Orleans 10. `Grain<TState>` is considered legacy and should not be used in new code.
 
 ```csharp
-public sealed class HeroGrain : Grain, IHeroGrain, IHasTenantAccessor<AppTenant>
+public sealed class HeroGrain : Grain, IHeroGrain, IWithTenantAccessor<AppTenant>
 {
     private readonly IPersistentState<HeroGrainState> _state;
 
@@ -239,12 +239,12 @@ public interface IHeroGrain : IGrainWithStringKey, ITenantGrain
 }
 ```
 
-### `IHasTenantAccessor<TTenant>` — receiving tenant context from the call filter
+### `IWithTenantAccessor<TTenant>` — receiving tenant context from the call filter
 
-The `TenantGrainCallFilter<TTenant>` automatically populates the grain's `TenantAccessor.Tenant` before each call — but only when the grain implements `IHasTenantAccessor<TTenant>`. Add a public auto-property of type `TenantAccessor<TTenant>` to opt in:
+The `TenantGrainCallFilter<TTenant>` automatically populates the grain's `TenantAccessor.Tenant` before each call — but only when the grain implements `IWithTenantAccessor<TTenant>`. Add a public auto-property of type `TenantAccessor<TTenant>` to opt in:
 
 ```csharp
-public sealed class HeroGrain : Grain, IHeroGrain, IHasTenantAccessor<AppTenant>
+public sealed class HeroGrain : Grain, IHeroGrain, IWithTenantAccessor<AppTenant>
 {
     private readonly IPersistentState<HeroGrainState> _state;
 
@@ -294,7 +294,7 @@ Register the call filter via `UseMultitenancy<TTenant>()` on the silo builder. P
 siloBuilder.UseMultitenancy<AppTenant>();
 ```
 
-This registers `TenantGrainCallFilter<TTenant>` as a singleton `IIncomingGrainCallFilter`. It automatically extracts the tenant key from the grain's primary key and populates `IHasTenantAccessor<TTenant>` grains before each call.
+This registers `TenantGrainCallFilter<TTenant>` as a singleton `IIncomingGrainCallFilter`. It automatically extracts the tenant key from the grain's primary key and populates `IWithTenantAccessor<TTenant>` grains before each call.
 
 ---
 
@@ -303,7 +303,7 @@ This registers `TenantGrainCallFilter<TTenant>` as a singleton `IIncomingGrainCa
 When writing a new tenant-aware grain:
 
 - [ ] Interface extends `IGrainWithStringKey` + `ITenantGrain`
-- [ ] Grain class implements `IHasTenantAccessor<TTenant>` with a `TenantAccessor<TTenant>` property
+- [ ] Grain class implements `IWithTenantAccessor<TTenant>` with a `TenantAccessor<TTenant>` property
 - [ ] `GetTenantKeyAsync()` uses `TenantGrainKey.GetTenantKey(this.GetPrimaryKeyString())`
 - [ ] Collections and complex types returned from interface methods use `[return: Immutable]`
 - [ ] Complex/collection parameters use `[Immutable]`

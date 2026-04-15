@@ -193,7 +193,7 @@ if (TenantGrainKey.TryParse(compositeKey, out var tenant, out var grain))
 ### 3. Implement a tenant-aware grain
 
 ```csharp
-public sealed class HeroGrain : Grain, IHeroGrain, IHasTenantAccessor<AppTenant>
+public sealed class HeroGrain : Grain, IHeroGrain, IWithTenantAccessor<AppTenant>
 {
     public TenantAccessor<AppTenant> TenantAccessor { get; } = new();
 

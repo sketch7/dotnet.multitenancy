@@ -1,4 +1,3 @@
-using Orleans.Runtime;
 using Sketch7.Multitenancy.Orleans;
 using Sketch7.Multitenancy.Sample.Api.Tenancy;
 
@@ -25,7 +24,7 @@ public sealed class HeroGrainState
 /// persists the result to the <c>heroes</c> storage provider, and serves it from memory on
 /// subsequent calls.
 /// </remarks>
-public sealed class HeroGrain : Grain, IHeroGrain, IHasTenantAccessor<AppTenant>
+public sealed class HeroGrain : Grain, IHeroGrain, IWithTenantAccessor<AppTenant>
 {
 	private readonly IServiceScopeFactory _scopeFactory;
 	private readonly IPersistentState<HeroGrainState> _state;
@@ -33,7 +32,9 @@ public sealed class HeroGrain : Grain, IHeroGrain, IHasTenantAccessor<AppTenant>
 	/// <summary>Initializes a new instance of <see cref="HeroGrain"/>.</summary>
 	public HeroGrain(
 		IServiceScopeFactory scopeFactory,
-		[PersistentState("heroes", "heroes")] IPersistentState<HeroGrainState> state)
+		[PersistentState("heroes", "heroes")]
+		IPersistentState<HeroGrainState> state
+	)
 	{
 		_scopeFactory = scopeFactory;
 		_state = state;
@@ -43,8 +44,8 @@ public sealed class HeroGrain : Grain, IHeroGrain, IHasTenantAccessor<AppTenant>
 	public TenantAccessor<AppTenant> TenantAccessor { get; } = new();
 
 	/// <inheritdoc />
-	public Task<string> GetTenantKeyAsync() =>
-		Task.FromResult(TenantGrainKey.GetTenantKey(this.GetPrimaryKeyString()));
+	public Task<string> GetTenantKeyAsync()
+		=> Task.FromResult(TenantGrainKey.GetTenantKey(this.GetPrimaryKeyString()));
 
 	/// <inheritdoc />
 	public async Task<List<Hero>> GetAllAsync()

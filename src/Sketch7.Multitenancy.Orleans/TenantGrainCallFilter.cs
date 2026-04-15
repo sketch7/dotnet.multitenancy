@@ -57,8 +57,8 @@ public class TenantGrainCallFilter<TTenant> : IIncomingGrainCallFilter
 				tenantKey
 			);
 
-		if (context.Grain is IHasTenantAccessor<TTenant> hasTenantAccessor)
-			hasTenantAccessor.TenantAccessor.Tenant = tenant;
+		if (context.Grain is IWithTenantAccessor<TTenant> withTenantAccessor)
+			withTenantAccessor.TenantAccessor.Tenant = tenant;
 	}
 }
 
@@ -66,7 +66,7 @@ public class TenantGrainCallFilter<TTenant> : IIncomingGrainCallFilter
 /// Opt-in interface for grains that want the <see cref="ITenantAccessor{TTenant}"/> populated by the call filter.
 /// </summary>
 /// <typeparam name="TTenant">The tenant type.</typeparam>
-public interface IHasTenantAccessor<TTenant>
+public interface IWithTenantAccessor<TTenant>
 	where TTenant : class, ITenant
 {
 	/// <summary>
