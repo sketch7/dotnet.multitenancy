@@ -17,7 +17,7 @@ public class MultitenancyMiddlewareTests
 		var (scope, context) = BuildMiddlewareContext(new() { Key = "lol" });
 		using var _ = scope;
 
-		bool nextInvoked = false;
+		var nextInvoked = false;
 		await BuildMiddleware(next: req => { nextInvoked = true; return Task.CompletedTask; })
 			.InvokeAsync(context);
 
@@ -32,7 +32,7 @@ public class MultitenancyMiddlewareTests
 		var (scope, context) = BuildMiddlewareContext();
 		using var _ = scope;
 
-		bool nextInvoked = false;
+		var nextInvoked = false;
 		await BuildMiddleware(next: req => { nextInvoked = true; return Task.CompletedTask; })
 			.InvokeAsync(context);
 
@@ -62,8 +62,15 @@ public class MultitenancyMiddlewareTests
 		services.AddMultitenancy<TestTenant>();
 		services.AddScoped<ITenantHttpResolver<TestTenant>>(_ => new StaticTenantResolver<TestTenant>(tenant));
 		var scope = services.BuildServiceProvider().CreateScope();
-		var context = new DefaultHttpContext { RequestServices = scope.ServiceProvider };
-		context.Response.Body = new MemoryStream();
+		var context = new DefaultHttpContext
+		{
+			RequestServices = scope.ServiceProvider,
+			Response =
+			{
+				Body = new MemoryStream()
+			}
+		};
+
 		return (scope, context);
 	}
 
