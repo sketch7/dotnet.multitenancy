@@ -1,4 +1,4 @@
-using Orleans.Providers;
+using Orleans.Runtime;
 using Sketch7.Multitenancy.Orleans;
 using Sketch7.Multitenancy.Sample.Api.Tenancy;
 
@@ -25,15 +25,18 @@ public sealed class HeroGrainState
 /// persists the result to the <c>heroes</c> storage provider, and serves it from memory on
 /// subsequent calls.
 /// </remarks>
-[StorageProvider(ProviderName = "heroes")]
-public sealed class HeroGrain : Grain<HeroGrainState>, IHeroGrain, IHasTenantAccessor<AppTenant>
+public sealed class HeroGrain : Grain, IHeroGrain, IHasTenantAccessor<AppTenant>
 {
 	private readonly IServiceScopeFactory _scopeFactory;
+	private readonly IPersistentState<HeroGrainState> _state;
 
 	/// <summary>Initializes a new instance of <see cref="HeroGrain"/>.</summary>
-	public HeroGrain(IServiceScopeFactory scopeFactory)
+	public HeroGrain(
+		IServiceScopeFactory scopeFactory,
+		[PersistentState("heroes", "heroes")] IPersistentState<HeroGrainState> state)
 	{
 		_scopeFactory = scopeFactory;
+		_state = state;
 	}
 
 	/// <inheritdoc />
@@ -47,14 +50,14 @@ public sealed class HeroGrain : Grain<HeroGrainState>, IHeroGrain, IHasTenantAcc
 	public async Task<List<Hero>> GetAllAsync()
 	{
 		await EnsureHeroesAsync();
-		return State.Heroes;
+		return _state.State.Heroes;
 	}
 
 	/// <inheritdoc />
 	public async Task<Hero?> GetByKeyAsync(string heroKey)
 	{
 		await EnsureHeroesAsync();
-		return State.Heroes.Find(h => h.Key == heroKey);
+		return _state.State.Heroes.Find(h => h.Key == heroKey);
 	}
 
 	/// <summary>
@@ -65,7 +68,7 @@ public sealed class HeroGrain : Grain<HeroGrainState>, IHeroGrain, IHasTenantAcc
 	/// </summary>
 	private async Task EnsureHeroesAsync()
 	{
-		if (State.Heroes.Count > 0)
+		if (_state.State.Heroes.Count > 0)
 			return;
 
 		using var scope = _scopeFactory.CreateScope();
@@ -75,7 +78,7 @@ public sealed class HeroGrain : Grain<HeroGrainState>, IHeroGrain, IHasTenantAcc
 		accessor.Tenant = TenantAccessor.Tenant;
 
 		var dataClient = scope.ServiceProvider.GetRequiredService<IHeroDataClient>();
-		State.Heroes = await dataClient.GetAll();
-		await WriteStateAsync();
+		_state.State.Heroes = await dataClient.GetAll();
+		await _state.WriteStateAsync();
 	}
 }
