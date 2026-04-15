@@ -33,9 +33,9 @@ Implement `ITenant` — the only requirement is a string `Key`. Use a `record` f
 ```csharp
 public record AppTenant : ITenant
 {
-    public string Key { get; init; } = default!;
-    public string Name { get; init; } = default!;
-    public string Organization { get; init; } = default!;
+    public required string Key { get; init; }
+    public required string Name { get; init; }
+    public required string Organization { get; init; }
 }
 ```
 
