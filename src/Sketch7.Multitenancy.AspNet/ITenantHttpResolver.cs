@@ -14,5 +14,5 @@ public interface ITenantHttpResolver<TTenant>
 	/// Returns <c>null</c> if the tenant could not be determined.
 	/// </summary>
 	/// <param name="httpContext">The current HTTP context.</param>
-	Task<TTenant?> Resolve(HttpContext httpContext);
+	ValueTask<TTenant?> Resolve(HttpContext httpContext);
 }

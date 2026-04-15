@@ -16,8 +16,8 @@ public sealed class TestTenantRegistry : ITenantRegistry<TestTenant>
 {
 	private readonly Dictionary<string, TestTenant> _tenants = new()
 	{
-		["lol"] = new TestTenant { Key = "lol", Organization = "riot" },
-		["hots"] = new TestTenant { Key = "hots", Organization = "blizzard" },
+		["lol"] = new() { Key = "lol", Organization = "riot" },
+		["hots"] = new() { Key = "hots", Organization = "blizzard" },
 	};
 
 	public TestTenant Get(string key) => _tenants[key];

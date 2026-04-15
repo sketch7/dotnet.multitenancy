@@ -14,7 +14,7 @@ public class MultitenancyMiddlewareTests
 	[Fact]
 	public async Task Middleware_SetsTenantAccessor_WhenTenantResolved()
 	{
-		var (scope, context) = BuildMiddlewareContext(new TestTenant { Key = "lol" });
+		var (scope, context) = BuildMiddlewareContext(new() { Key = "lol" });
 		using var _ = scope;
 
 		bool nextInvoked = false;
@@ -82,5 +82,5 @@ file sealed class StaticTenantResolver<TTenant> : ITenantHttpResolver<TTenant>
 
 	public StaticTenantResolver(TTenant? tenant) => _tenant = tenant;
 
-	public Task<TTenant?> Resolve(HttpContext httpContext) => Task.FromResult(_tenant);
+	public ValueTask<TTenant?> Resolve(HttpContext httpContext) => new(_tenant);
 }
