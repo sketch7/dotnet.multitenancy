@@ -50,12 +50,6 @@ public class TenantGrainCallFilter<TTenant> : IIncomingGrainCallFilter
 		}
 
 		var tenant = _registry.Get(tenantKey);
-		if (tenant == null)
-			_logger.LogWarning(
-				"Grain {GrainType} has tenant key '{TenantKey}' which was not found in the registry.",
-				context.Grain.GetType().Name,
-				tenantKey
-			);
 
 		if (context.Grain is IWithTenantAccessor<TTenant> withTenantAccessor)
 			withTenantAccessor.TenantAccessor.Tenant = tenant;
