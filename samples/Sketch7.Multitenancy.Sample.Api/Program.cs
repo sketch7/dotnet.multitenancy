@@ -15,14 +15,13 @@ builder.AddServiceDefaults();
 var tenantRegistry = new AppTenantRegistry();
 
 builder.Services
-	.AddSingleton<IAppTenantRegistry>(tenantRegistry)
-	.AddSingleton<ITenantRegistry<AppTenant>>(tenantRegistry)
 	.AddSingleton<IDataClientManager, DataClientManager>();
 
 builder.Services
 	.AddMultitenancy<AppTenant>(opts => opts
+		.WithRegistry<IAppTenantRegistry>(tenantRegistry)
 		.WithHttpResolver<AppTenant, AppTenantHttpResolver>()
-		.WithTenants(tenantRegistry.GetAll())
+		//.WithTenants(tenantRegistry.GetAll())
 		.WithServices(tsb => tsb
 			.For(t => t.Organization == OrganizationNames.Riot, s => s
 				.AddScoped<IHeroDataClient, MockLoLHeroDataClient>()

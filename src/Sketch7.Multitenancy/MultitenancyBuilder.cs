@@ -43,7 +43,7 @@ public class MultitenancyBuilder<TTenant>
 		where TRegistry : class, ITenantRegistry<TTenant>
 	{
 		_tenants = registry.GetAll();
-		Services.AddSingleton<TRegistry>(registry);
+		Services.AddSingleton(registry);
 		Services.AddSingleton<ITenantRegistry<TTenant>>(registry);
 		return this;
 	}
