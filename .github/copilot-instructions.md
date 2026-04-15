@@ -34,7 +34,7 @@ Three published packages + sample app:
 
 ### Orleans grain keys
 
-Always use `TenantGrainKey.Create(tenantKey, grainKey)` — the format is `{tenantKey}/{grainKey}`. Parsing failures throw `FormatException`; prefer `TryParse()` in non-middleware code.
+Always use `TenantGrainKey.Create(tenantKey, grainKey)` — the format is `tenant/{tenantKey}/{grainId}`. `TryParse` returns a `TenantGrainKey` record struct (not `out string?` params); parsing failures in throwing overloads throw `FormatException`; prefer `TryParse()` in non-middleware code.
 
 ### Orleans Grain Best Practices
 

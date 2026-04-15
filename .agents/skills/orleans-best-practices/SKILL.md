@@ -131,25 +131,31 @@ public class WorkerGrain : Grain, IWorkerGrain { }
 
 ### Tenant-scoped String Keys
 
-For tenant-aware grains use `TenantGrainKey.Create(tenantKey, grainKey)`. The format is `{tenantKey}/{grainKey}`.
+For tenant-aware grains use `TenantGrainKey.Create(tenantKey, grainKey)`. The format is `tenant/{tenantKey}/{grainId}` — the `tenant/` prefix prevents ambiguous parsing when the grain ID itself contains `/`.
 
 ```csharp
 // Creating a key
 var key = TenantGrainKey.Create("tenant-a", "heroes");
-// → "tenant-a/heroes"
+// → "tenant/tenant-a/heroes"
 
 // Resolving a grain
 grainFactory.GetGrain<IHeroGrain>(TenantGrainKey.Create(tenantKey, "heroes"));
 
-// Parsing inside a grain
+// Parsing inside a grain — GetTenantKey/GetGrainKey throw FormatException on bad format
 var primaryKey = this.GetPrimaryKeyString();
-var tenantKey = TenantGrainKey.GetTenantKey(primaryKey);  // throws FormatException on bad format
+var tenantKey = TenantGrainKey.GetTenantKey(primaryKey);
 var grainKey  = TenantGrainKey.GetGrainKey(primaryKey);
 
-// Safe parsing (non-middleware code)
-if (TenantGrainKey.TryParse(primaryKey, out var tenantKey, out var grainKey))
+// Safe parsing — TryParse returns a TenantGrainKey record struct (not out string? params)
+if (TenantGrainKey.TryParse(primaryKey, out var parsed))
 {
-    // use tenantKey and grainKey
+    // parsed.TenantKey, parsed.GrainKey
+}
+
+// Zero-allocation path from Orleans grain identity (IdSpan → UTF-8 bytes, no ToString())
+if (TenantGrainKey.TryParse(context.GrainId.Key, out var parsed))
+{
+    // parsed.TenantKey, parsed.GrainKey
 }
 ```
 
@@ -157,6 +163,7 @@ if (TenantGrainKey.TryParse(primaryKey, out var tenantKey, out var grainKey))
 
 - Always use `TenantGrainKey.Create(...)` to build tenant-scoped keys — never concatenate manually
 - Parse via `TenantGrainKey.GetTenantKey` / `GetGrainKey` (throws) or `TryParse` (safe) — never split on `/` manually
+- `TryParse` accepts `string`, `ReadOnlySpan<char>`, `ReadOnlySpan<byte>`, and `IdSpan` — prefer `IdSpan` in activators to avoid `.ToString()` allocation
 - Prefer `TryParse` in grain logic; reserve the throwing overloads for middleware/filters where an invalid key is always a bug
 
 ---

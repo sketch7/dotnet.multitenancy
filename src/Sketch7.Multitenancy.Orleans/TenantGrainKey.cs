@@ -10,6 +10,9 @@ public readonly record struct TenantGrainKey
 {
 	private const string Prefix = "tenant/";
 	private const char Separator = '/';
+	// ReadOnlySpan<char> property from a literal is stored in the PE's read-only section —
+	// avoids dereferencing the heap string object on every call to TryParse(ReadOnlySpan<char>).
+	private static ReadOnlySpan<char> PrefixSpan => "tenant/";
 
 	/// <summary>Gets the tenant key segment.</summary>
 	public string TenantKey { get; init; }
@@ -33,14 +36,14 @@ public readonly record struct TenantGrainKey
 	{
 		ArgumentException.ThrowIfNullOrWhiteSpace(tenantKey);
 		ArgumentException.ThrowIfNullOrWhiteSpace(grainKey);
-		return $"{Prefix}{tenantKey}{Separator}{grainKey}";
+		return string.Concat(Prefix, tenantKey, "/", grainKey);
 	}
 
 	/// <summary>
 	/// Returns the composite key string in the format <c>tenant/{TenantKey}/{GrainKey}</c>.
 	/// </summary>
 	public override string ToString()
-		=> $"{Prefix}{TenantKey}{Separator}{GrainKey}";
+		=> string.Concat(Prefix, TenantKey, "/", GrainKey);
 
 	/// <summary>
 	/// Parses a composite grain key, throwing <see cref="FormatException"/> on failure.
@@ -61,14 +64,13 @@ public readonly record struct TenantGrainKey
 	/// <returns><c>true</c> if parsing succeeded; otherwise <c>false</c>.</returns>
 	public static bool TryParse(ReadOnlySpan<char> compositeKey, out TenantGrainKey result)
 	{
-		var prefix = Prefix.AsSpan();
-		if (!compositeKey.StartsWith(prefix))
+		if (!compositeKey.StartsWith(PrefixSpan))
 		{
 			result = default;
 			return false;
 		}
 
-		var rest = compositeKey[prefix.Length..];
+		var rest = compositeKey[Prefix.Length..];
 		var separatorIndex = rest.IndexOf(Separator);
 		if (separatorIndex <= 0 || separatorIndex >= rest.Length - 1)
 		{

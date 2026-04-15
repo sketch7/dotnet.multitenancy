@@ -175,12 +175,16 @@ Registers `ITenantOrleansResolver<TTenant>` and `TenantGrainActivator<TTenant>` 
 
 ### 2. Grain keys
 
-Grain keys follow the `{tenantKey}/{grainKey}` convention:
+Grain keys follow the `tenant/{tenantKey}/{grainId}` format — the `tenant/` prefix prevents ambiguous parsing when the grain ID itself contains `/`:
 
 ```csharp
-string key = TenantGrainKey.Create("lol", "hero-42"); // "lol/hero-42"
+string key = TenantGrainKey.Create("lol", "hero-42"); // "tenant/lol/hero-42"
 string tenantKey = TenantGrainKey.GetTenantKey(key);  // "lol"
 string grainKey  = TenantGrainKey.GetGrainKey(key);   // "hero-42"
+
+// TryParse returns a TenantGrainKey record struct
+if (TenantGrainKey.TryParse(key, out var parsed))
+    Console.WriteLine(parsed.TenantKey); // "lol"
 ```
 
 ### 3. Grain authoring
