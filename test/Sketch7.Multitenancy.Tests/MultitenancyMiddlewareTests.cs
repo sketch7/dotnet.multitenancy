@@ -14,129 +14,68 @@ public class MultitenancyMiddlewareTests
 	[Fact]
 	public async Task Middleware_SetsTenantAccessor_WhenTenantResolved()
 	{
-		// Arrange
-		var tenant = new TestTenant { Key = "lol" };
-		var resolver = new StaticTenantResolver<TestTenant>(tenant);
-
-		var services = new ServiceCollection();
-		services.AddMultitenancy<TestTenant>();
-		services.AddScoped<ITenantHttpResolver<TestTenant>>(_ => resolver);
-
-		var provider = services.BuildServiceProvider();
-
-		using var scope = provider.CreateScope();
-		var context = new DefaultHttpContext { RequestServices = scope.ServiceProvider };
+		var (scope, context) = BuildMiddlewareContext(new TestTenant { Key = "lol" });
+		using var _ = scope;
 
 		bool nextInvoked = false;
-		var middleware = new MultitenancyMiddleware<TestTenant>(
-			_ => { nextInvoked = true; return Task.CompletedTask; },
-			new MultitenancyMiddlewareOptions());
+		await BuildMiddleware(next: req => { nextInvoked = true; return Task.CompletedTask; })
+			.InvokeAsync(context);
 
-		// Act
-		await middleware.InvokeAsync(context);
-
-		// Assert
-		var accessor = scope.ServiceProvider.GetRequiredService<ITenantAccessor<TestTenant>>();
-		accessor.Tenant.ShouldNotBeNull();
-		accessor.Tenant!.Key.ShouldBe("lol");
+		scope.ServiceProvider.GetRequiredService<ITenantAccessor<TestTenant>>()
+			.Tenant!.Key.ShouldBe("lol");
 		nextInvoked.ShouldBeTrue();
 	}
 
 	[Fact]
-	public async Task Middleware_Returns400_WhenTenantNotResolved()
+	public async Task Middleware_WhenTenantNotResolved_Returns400AndDoesNotCallNext()
 	{
-		// Arrange
-		var resolver = new StaticTenantResolver<TestTenant>(null);
-
-		var services = new ServiceCollection();
-		services.AddMultitenancy<TestTenant>();
-		services.AddScoped<ITenantHttpResolver<TestTenant>>(_ => resolver);
-
-		var provider = services.BuildServiceProvider();
-
-		using var scope = provider.CreateScope();
-		var context = new DefaultHttpContext { RequestServices = scope.ServiceProvider };
-		context.Response.Body = new System.IO.MemoryStream();
+		var (scope, context) = BuildMiddlewareContext();
+		using var _ = scope;
 
 		bool nextInvoked = false;
-		var middleware = new MultitenancyMiddleware<TestTenant>(
-			_ => { nextInvoked = true; return Task.CompletedTask; },
-			new MultitenancyMiddlewareOptions());
+		await BuildMiddleware(next: req => { nextInvoked = true; return Task.CompletedTask; })
+			.InvokeAsync(context);
 
-		// Act
-		await middleware.InvokeAsync(context);
-
-		// Assert
 		context.Response.StatusCode.ShouldBe(StatusCodes.Status400BadRequest);
 		nextInvoked.ShouldBeFalse();
 	}
 
 	[Fact]
-	public async Task Middleware_DoesNotCallNext_WhenTenantNotResolved()
-	{
-		// Arrange
-		var resolver = new StaticTenantResolver<TestTenant>(null);
-
-		var services = new ServiceCollection();
-		services.AddMultitenancy<TestTenant>();
-		services.AddScoped<ITenantHttpResolver<TestTenant>>(_ => resolver);
-
-		var provider = services.BuildServiceProvider();
-
-		using var scope = provider.CreateScope();
-		var context = new DefaultHttpContext { RequestServices = scope.ServiceProvider };
-		context.Response.Body = new System.IO.MemoryStream();
-
-		int nextCallCount = 0;
-		var middleware = new MultitenancyMiddleware<TestTenant>(
-			_ => { nextCallCount++; return Task.CompletedTask; },
-			new MultitenancyMiddlewareOptions());
-
-		// Act
-		await middleware.InvokeAsync(context);
-
-		// Assert
-		nextCallCount.ShouldBe(0);
-	}
-
-	[Fact]
 	public async Task Middleware_UsesCustomInvalidTenantResponse()
 	{
-		// Arrange
-		var resolver = new StaticTenantResolver<TestTenant>(null);
-
-		var services = new ServiceCollection();
-		services.AddMultitenancy<TestTenant>();
-		services.AddScoped<ITenantHttpResolver<TestTenant>>(_ => resolver);
-
-		var provider = services.BuildServiceProvider();
-
-		using var scope = provider.CreateScope();
-		var context = new DefaultHttpContext { RequestServices = scope.ServiceProvider };
-		context.Response.Body = new System.IO.MemoryStream();
+		var (scope, context) = BuildMiddlewareContext();
+		using var _ = scope;
 
 		var options = new MultitenancyMiddlewareOptions()
 			.WithInvalidTenantResponse(() => new { code = "custom.error" });
+		await BuildMiddleware(options: options).InvokeAsync(context);
 
-		var middleware = new MultitenancyMiddleware<TestTenant>(
-			_ => Task.CompletedTask,
-			options);
-
-		// Act
-		await middleware.InvokeAsync(context);
-
-		// Assert
 		context.Response.StatusCode.ShouldBe(StatusCodes.Status400BadRequest);
 		context.Response.ContentType?.ShouldContain("application/json");
 	}
+
+	// ---- Helpers ----
+
+	private static (IServiceScope Scope, DefaultHttpContext Context) BuildMiddlewareContext(TestTenant? tenant = null)
+	{
+		var services = new ServiceCollection();
+		services.AddMultitenancy<TestTenant>();
+		services.AddScoped<ITenantHttpResolver<TestTenant>>(_ => new StaticTenantResolver<TestTenant>(tenant));
+		var scope = services.BuildServiceProvider().CreateScope();
+		var context = new DefaultHttpContext { RequestServices = scope.ServiceProvider };
+		context.Response.Body = new MemoryStream();
+		return (scope, context);
+	}
+
+	private static MultitenancyMiddleware<TestTenant> BuildMiddleware(
+		RequestDelegate? next = null,
+		MultitenancyMiddlewareOptions? options = null)
+		=> new(next ?? (_ => Task.CompletedTask), options ?? new MultitenancyMiddlewareOptions());
 }
 
 // ---- Test doubles ----
 
-/// <summary>
-/// A simple resolver that always returns the provided tenant.
-/// </summary>
-file class StaticTenantResolver<TTenant> : ITenantHttpResolver<TTenant>
+file sealed class StaticTenantResolver<TTenant> : ITenantHttpResolver<TTenant>
 	where TTenant : class, ITenant
 {
 	private readonly TTenant? _tenant;
