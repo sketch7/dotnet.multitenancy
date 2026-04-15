@@ -11,7 +11,7 @@ public class TenantGrainCallFilter<TTenant> : IIncomingGrainCallFilter
 	where TTenant : class, ITenant
 {
 	private readonly ITenantRegistry<TTenant> _registry;
-	private readonly ILogger<TenantGrainCallFilter<TTenant>> _logger;
+	private readonly ILogger _logger;
 
 	/// <summary>
 	/// Initializes a new instance of <see cref="TenantGrainCallFilter{TTenant}"/>.
