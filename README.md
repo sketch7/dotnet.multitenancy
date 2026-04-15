@@ -10,7 +10,7 @@ Multi-tenancy library for .NET 10 (C# 14) using native Microsoft DI keyed servic
 - Per-tenant service registration using native Microsoft DI keyed services — no third-party containers
 - Transparent unkeyed proxy — controllers and handlers stay unaware of multitenancy; inject `IMyService` and get the right tenant implementation automatically
 - Fluent builder with by-key, predicate, and all-tenants registration
-- Microsoft Orleans support — tenant-scoped grain keys and a call filter that propagates tenant context
+- Microsoft Orleans support — tenant-scoped grain keys and a grain activator that propagates tenant context once per grain activation
 
 ## Packages
 
@@ -18,7 +18,7 @@ Multi-tenancy library for .NET 10 (C# 14) using native Microsoft DI keyed servic
 | ------------------------------ | ----------------------------------------------------------------------------------- |
 | `Sketch7.Multitenancy`         | Core abstractions and builder (`ITenant`, `ITenantAccessor`, `MultitenancyBuilder`) |
 | `Sketch7.Multitenancy.AspNet`  | ASP.NET Core middleware and HTTP resolver                                           |
-| `Sketch7.Multitenancy.Orleans` | Orleans grain call filter and tenant grain key helpers                              |
+| `Sketch7.Multitenancy.Orleans` | Orleans grain activator and tenant grain key helpers                                |
 
 ---
 
@@ -166,22 +166,13 @@ app.UseMultitenancy<AppTenant>(new MultitenancyMiddlewareOptions()
 
 ### 1. Configure the silo
 
-Choose a propagation strategy when configuring the silo:
+Call `UseMultitenancy<TTenant>()` on the silo builder. This registers the tenant resolver and the grain activator in one step:
 
 ```csharp
-// Option A — once per grain activation (recommended)
-siloBuilder.UseMultitenancy<AppTenant>().WithGrainActivator();
-
-// Option B — on every incoming grain call
-siloBuilder.UseMultitenancy<AppTenant>().WithIncomingCallFilter();
+siloBuilder.UseMultitenancy<AppTenant>();
 ```
 
-| Strategy                   | When tenant is set       | Overhead                                        |
-| -------------------------- | ------------------------ | ----------------------------------------------- |
-| `WithGrainActivator()`     | Once at grain activation | Minimal — set once for the grain lifetime       |
-| `WithIncomingCallFilter()` | Before every grain call  | Per-call — useful when tenant must be refreshed |
-
-`WithGrainActivator()` supports two grain authoring styles — see sections 3a and 3b below.
+`UseMultitenancy` supports two grain authoring styles — see sections 3a and 3b below.
 
 ### 2. Create tenant-scoped grain keys
 
@@ -204,7 +195,7 @@ if (TenantGrainKey.TryParse(compositeKey, out var tenant, out var grain))
 
 ### 3a. Grain with constructor injection (recommended)
 
-`WithGrainActivator()` sets `TenantAccessor<T>` in the grain's `ActivationServices` scope **before** the
+`UseMultitenancy` sets `TenantAccessor<T>` in the grain's `ActivationServices` scope **before** the
 grain instance is constructed. Tenant-aware services (e.g. `IHeroDataClient` resolved via the multitenancy
 proxy) can therefore be injected directly into the constructor — no scope factories or property accessors needed.
 
@@ -241,7 +232,7 @@ public sealed class HeroGrain : Grain, IHeroGrain
 
 ### 3b. Grain with property accessor (`IWithTenantAccessor`)
 
-Alternatively, implement `IWithTenantAccessor<T>`. The activator sets `TenantAccessor.Tenant` after grain
+Alternatively, implement `IWithTenantAccessor<T>`. The grain activator sets `TenantAccessor.Tenant` after grain
 construction via a lifecycle callback. Use this when you need to read the tenant object directly inside grain
 methods (e.g. to branch on tenant properties):
 

@@ -51,7 +51,7 @@ builder.Host.UseOrleans(silo =>
 		silo.AddMemoryGrainStorage("heroes");
 	}
 
-	silo.UseMultitenancy<AppTenant>().WithGrainActivator();
+	silo.UseMultitenancy<AppTenant>();
 });
 
 var app = builder.Build();
