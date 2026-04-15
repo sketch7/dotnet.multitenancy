@@ -166,110 +166,51 @@ app.UseMultitenancy<AppTenant>(new MultitenancyMiddlewareOptions()
 
 ### 1. Configure the silo
 
-Call `UseMultitenancy<TTenant>()` on the silo builder. This registers the tenant resolver and the grain activator in one step:
-
 ```csharp
 siloBuilder.UseMultitenancy<AppTenant>();
 ```
 
-`UseMultitenancy` supports two grain authoring styles — see sections 3a and 3b below.
+Registers `ITenantOrleansResolver<TTenant>` and `TenantGrainActivator<TTenant>` — tenant context is set once per grain activation.
 
-### 2. Create tenant-scoped grain keys
+### 2. Grain keys
 
 Grain keys follow the `{tenantKey}/{grainKey}` convention:
 
 ```csharp
-// Create
 string key = TenantGrainKey.Create("lol", "hero-42"); // "lol/hero-42"
-
-// Parse
-string tenantKey = TenantGrainKey.GetTenantKey("lol/hero-42"); // "lol"
-string grainKey  = TenantGrainKey.GetGrainKey("lol/hero-42");  // "hero-42"
-
-// Safe parse
-if (TenantGrainKey.TryParse(compositeKey, out var tenant, out var grain))
-{
-    // use tenant, grain
-}
+string tenantKey = TenantGrainKey.GetTenantKey(key);  // "lol"
+string grainKey  = TenantGrainKey.GetGrainKey(key);   // "hero-42"
 ```
 
-### 3a. Grain with constructor injection (recommended)
+### 3. Grain authoring
 
-`UseMultitenancy` sets `TenantAccessor<T>` in the grain's `ActivationServices` scope **before** the
-grain instance is constructed. Tenant-aware services (e.g. `IHeroDataClient` resolved via the multitenancy
-proxy) can therefore be injected directly into the constructor — no scope factories or property accessors needed.
+Two patterns are supported:
+
+**Constructor injection (recommended)** — tenant context is set in `ActivationServices` before the grain is constructed, so tenant-aware services resolve correctly via the multitenancy proxy:
 
 ```csharp
 public sealed class HeroGrain : Grain, IHeroGrain
 {
-    private readonly IHeroDataClient _heroDataClient;
-    private readonly IPersistentState<HeroGrainState> _state;
-
-    public HeroGrain(
-        IHeroDataClient heroDataClient,
-        [PersistentState("heroes", "heroes")]
-        IPersistentState<HeroGrainState> state
-    )
-    {
-        _heroDataClient = heroDataClient;
-        _state = state;
-    }
+    public HeroGrain(IHeroDataClient heroDataClient, ...) { ... }
 
     public Task<string> GetTenantKeyAsync()
         => Task.FromResult(TenantGrainKey.GetTenantKey(this.GetPrimaryKeyString()));
-
-    public async Task<List<Hero>> GetAllAsync()
-    {
-        if (_state.State.Heroes.Count == 0)
-        {
-            _state.State.Heroes = await _heroDataClient.GetAll();
-            await _state.WriteStateAsync();
-        }
-        return _state.State.Heroes;
-    }
 }
 ```
 
-### 3b. Grain with property accessor (`IWithTenantAccessor`)
-
-Alternatively, implement `IWithTenantAccessor<T>`. The grain activator sets `TenantAccessor.Tenant` after grain
-construction via a lifecycle callback. Use this when you need to read the tenant object directly inside grain
-methods (e.g. to branch on tenant properties):
+**Property accessor** — implement `IWithTenantAccessor<T>` to receive the `AppTenant` object directly inside grain methods:
 
 ```csharp
 public sealed class HeroTypeGrain : Grain, IHeroTypeGrain, IWithTenantAccessor<AppTenant>
 {
-    private readonly IHeroDataClient _heroDataClient;
-    private readonly IPersistentState<HeroTypeGrainState> _state;
-
-    public HeroTypeGrain(
-        IHeroDataClient heroDataClient,
-        [PersistentState("hero-types", "heroes")]
-        IPersistentState<HeroTypeGrainState> state
-    )
-    {
-        _heroDataClient = heroDataClient;
-        _state = state;
-    }
-
     public TenantAccessor<AppTenant> TenantAccessor { get; } = new();
 
     public Task<string> GetTenantKeyAsync()
         => Task.FromResult(TenantGrainKey.GetTenantKey(this.GetPrimaryKeyString()));
-
-    public async Task<List<HeroType>> GetAllAsync()
-    {
-        if (_state.State.HeroTypes.Count == 0)
-        {
-            _state.State.HeroTypes = await _heroDataClient.GetAllHeroTypes();
-            await _state.WriteStateAsync();
-        }
-        return _state.State.HeroTypes;
-    }
 }
 ```
 
-### 4. Define the grain interface (Orleans best practices)
+### 4. Grain interface
 
 ```csharp
 public interface IHeroGrain : IGrainWithStringKey, ITenantGrain
@@ -277,9 +218,5 @@ public interface IHeroGrain : IGrainWithStringKey, ITenantGrain
     [AlwaysInterleave]
     [return: Immutable]
     Task<List<Hero>> GetAllAsync();
-
-    [AlwaysInterleave]
-    [return: Immutable]
-    Task<Hero?> GetByKeyAsync(string heroKey);
 }
 ```
