@@ -28,33 +28,37 @@ public class TenantGrainCallFilter<TTenant> : IIncomingGrainCallFilter
 	/// <inheritdoc />
 	public async Task Invoke(IIncomingGrainCallContext context)
 	{
-		// Only applies to tenant-aware grains
-		if (context.Grain is ITenantGrain && context.Grain is IAddressable addressable)
+		SetTenantContext(context);
+		await context.Invoke();
+	}
+
+	private void SetTenantContext(IIncomingGrainCallContext context)
+	{
+		if (context.Grain is not (ITenantGrain and IAddressable addressable))
+			return;
+
+		var primaryKey = addressable.GetPrimaryKeyString();
+
+		if (!TenantGrainKey.TryParse(primaryKey, out var tenantKey, out _) || tenantKey == null)
 		{
-			// Extract the tenant key from the composite primary key
-			var primaryKey = addressable.GetPrimaryKeyString();
-
-			if (TenantGrainKey.TryParse(primaryKey, out var tenantKey, out _) && tenantKey != null)
-			{
-				var tenant = _registry.Get(tenantKey);
-				if (tenant == null)
-				{
-					_logger.LogWarning("Grain {GrainType} has tenant key '{TenantKey}' which was not found in the registry.",
-						context.Grain.GetType().Name, tenantKey);
-				}
-
-				// If the grain also exposes a tenant accessor, set the tenant
-				if (context.Grain is IHasTenantAccessor<TTenant> hasTenantAccessor)
-					hasTenantAccessor.TenantAccessor.Tenant = tenant;
-			}
-			else
-			{
-				_logger.LogWarning("Grain {GrainType} has an invalid primary key format for tenant extraction: '{PrimaryKey}'.",
-					context.Grain.GetType().Name, primaryKey);
-			}
+			_logger.LogWarning(
+				"Grain {GrainType} has an invalid primary key format for tenant extraction: '{PrimaryKey}'.",
+				context.Grain.GetType().Name,
+				primaryKey
+			);
+			return;
 		}
 
-		await context.Invoke();
+		var tenant = _registry.Get(tenantKey);
+		if (tenant == null)
+			_logger.LogWarning(
+				"Grain {GrainType} has tenant key '{TenantKey}' which was not found in the registry.",
+				context.Grain.GetType().Name,
+				tenantKey
+			);
+
+		if (context.Grain is IHasTenantAccessor<TTenant> hasTenantAccessor)
+			hasTenantAccessor.TenantAccessor.Tenant = tenant;
 	}
 }
 

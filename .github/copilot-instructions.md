@@ -103,8 +103,10 @@ Prefer early returns and guard clauses over nested `if` blocks, when it avoids n
 // ✅ CORRECT — guard at the top, happy path flows unindented
 public void Process(string key)
 {
-    if (key is null) return;
-    if (!IsValid(key)) return;
+    if (key is null)
+      return;
+    if (!IsValid(key))
+    return;
 
     DoWork(key);
 }
