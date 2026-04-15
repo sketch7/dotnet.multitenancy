@@ -14,4 +14,15 @@ internal static class TestHelpers
 		sp.GetRequiredService<TenantAccessor<TTenant>>().Tenant = tenant;
 		return sp;
 	}
+
+	/// <summary>
+	/// Creates a new scope and sets the current tenant. Dispose the returned scope when done.
+	/// </summary>
+	internal static IServiceScope CreateScopeForTenant<TTenant>(this IServiceProvider provider, TTenant tenant)
+		where TTenant : class, ITenant
+	{
+		var scope = provider.CreateScope();
+		scope.ServiceProvider.SetTenant(tenant);
+		return scope;
+	}
 }
