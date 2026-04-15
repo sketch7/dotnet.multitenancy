@@ -192,9 +192,6 @@ Two patterns are supported:
 public sealed class HeroGrain : Grain, IHeroGrain
 {
     public HeroGrain(IHeroDataClient heroDataClient, ...) { ... }
-
-    public Task<string> GetTenantKeyAsync()
-        => Task.FromResult(TenantGrainKey.GetTenantKey(this.GetPrimaryKeyString()));
 }
 ```
 
@@ -204,9 +201,6 @@ public sealed class HeroGrain : Grain, IHeroGrain
 public sealed class HeroTypeGrain : Grain, IHeroTypeGrain, IWithTenantAccessor<AppTenant>
 {
     public TenantAccessor<AppTenant> TenantAccessor { get; } = new();
-
-    public Task<string> GetTenantKeyAsync()
-        => Task.FromResult(TenantGrainKey.GetTenantKey(this.GetPrimaryKeyString()));
 }
 ```
 

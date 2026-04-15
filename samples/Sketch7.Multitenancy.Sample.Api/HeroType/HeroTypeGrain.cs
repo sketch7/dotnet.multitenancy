@@ -73,10 +73,6 @@ public sealed class HeroTypeGrain : Grain, IHeroTypeGrain, IWithTenantAccessor<A
 	public TenantAccessor<AppTenant> TenantAccessor { get; } = new();
 
 	/// <inheritdoc />
-	public Task<string> GetTenantKeyAsync()
-		=> Task.FromResult(TenantGrainKey.GetTenantKey(this.GetPrimaryKeyString()));
-
-	/// <inheritdoc />
 	public async Task<List<HeroType>> GetAllAsync()
 	{
 		await EnsureHeroTypesAsync();
