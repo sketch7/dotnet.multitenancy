@@ -180,7 +180,9 @@ public sealed class HeroGrain : Grain, IHeroGrain
     private readonly IPersistentState<HeroGrainState> _state;
 
     public HeroGrain(
-        [PersistentState("heroes", "heroes")] IPersistentState<HeroGrainState> state)
+      [PersistentState("heroes", "heroes")]
+      IPersistentState<HeroGrainState> state
+    )
     {
         _state = state;
     }
@@ -199,7 +201,9 @@ public sealed class HeroGrain : Grain, IHeroGrain, IWithTenantAccessor<AppTenant
     private readonly IPersistentState<HeroGrainState> _state;
 
     public HeroGrain(
-        [PersistentState("heroes", "heroes")] IPersistentState<HeroGrainState> state)
+      [PersistentState("heroes", "heroes")]
+      IPersistentState<HeroGrainState> state
+    )
     {
         _state = state;
     }
@@ -249,15 +253,15 @@ public sealed class HeroGrain : Grain, IHeroGrain, IWithTenantAccessor<AppTenant
     private readonly IPersistentState<HeroGrainState> _state;
 
     public HeroGrain(
-        [PersistentState("heroes", "heroes")] IPersistentState<HeroGrainState> state)
+      [PersistentState("heroes", "heroes")]
+      IPersistentState<HeroGrainState> state
+    )
     {
         _state = state;
     }
 
-    /// <inheritdoc />
     public TenantAccessor<AppTenant> TenantAccessor { get; } = new();
 
-    /// <inheritdoc />
     public Task<string> GetTenantKeyAsync() =>
         Task.FromResult(TenantGrainKey.GetTenantKey(this.GetPrimaryKeyString()));
 }
