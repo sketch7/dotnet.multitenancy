@@ -149,6 +149,13 @@ public class MultitenancyBuilder<TTenant>
 
 	private void RegisterProxy(Type serviceType, ServiceLifetime lifetime)
 	{
+		// Proxy must be at most Scoped — even when the underlying service is Singleton —
+		// because it reads ITenantAccessor which is inherently scope-bound.
+		// The underlying keyed singleton is still resolved (and shared) correctly through the scoped proxy.
+		var proxyLifetime = lifetime == ServiceLifetime.Singleton
+			? ServiceLifetime.Scoped
+			: lifetime;
+
 		var proxyDescriptor = ServiceDescriptor.Describe(
 			serviceType,
 			sp =>
@@ -161,7 +168,7 @@ public class MultitenancyBuilder<TTenant>
 						"Ensure multitenancy middleware runs before services are resolved.");
 				return ((IKeyedServiceProvider)sp).GetRequiredKeyedService(serviceType, tenantKey);
 			},
-			lifetime);
+			proxyLifetime);
 
 		Services.Add(proxyDescriptor);
 	}
