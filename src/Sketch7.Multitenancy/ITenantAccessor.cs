@@ -15,7 +15,7 @@ public interface ITenantAccessor
 /// Provides typed access to the current tenant in the active scope.
 /// </summary>
 /// <typeparam name="TTenant">The tenant type.</typeparam>
-public interface ITenantAccessor<TTenant> : ITenantAccessor
+public interface ITenantAccessor<out TTenant> : ITenantAccessor
 	where TTenant : class, ITenant
 {
 	/// <summary>

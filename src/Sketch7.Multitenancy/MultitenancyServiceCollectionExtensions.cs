@@ -1,6 +1,9 @@
-using Microsoft.Extensions.DependencyInjection;
+using Sketch7.Multitenancy;
 
-namespace Sketch7.Multitenancy;
+// ReSharper disable once CheckNamespace
+#pragma warning disable IDE0130 // Namespace does not match folder structure
+namespace Microsoft.Extensions.DependencyInjection;
+#pragma warning restore IDE0130 // Namespace does not match folder structure
 
 /// <summary>
 /// Extension members for registering multitenancy services on <see cref="IServiceCollection"/>.
