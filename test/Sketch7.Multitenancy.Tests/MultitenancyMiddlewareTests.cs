@@ -21,7 +21,7 @@ public class MultitenancyMiddlewareTests
 		await BuildMiddleware(next: req => { nextInvoked = true; return Task.CompletedTask; })
 			.InvokeAsync(context);
 
-		scope.ServiceProvider.GetRequiredService<ITenantAccessor<TestTenant>>()
+		scope.ServiceProvider.GetRequiredService<ITenantAccessor>()
 			.Tenant!.Key.ShouldBe("lol");
 		nextInvoked.ShouldBeTrue();
 	}

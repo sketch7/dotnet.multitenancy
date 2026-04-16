@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Http.HttpResults;
 using Sketch7.Multitenancy.Orleans;
-using Sketch7.Multitenancy.Sample.Api.Tenancy;
 
 namespace Sketch7.Multitenancy.Sample.Api.Heroes;
 
@@ -15,7 +14,7 @@ public static class HeroesEndpoints
 			var group = app.MapGroup("/api/heroes")
 				.WithTags("Heroes");
 
-			group.MapGet("/", async (IGrainFactory grainFactory, ITenantAccessor<AppTenant> tenantAccessor) =>
+			group.MapGet("/", async (IGrainFactory grainFactory, ITenantAccessor tenantAccessor) =>
 			{
 				var grain = GetHeroGrain(grainFactory, tenantAccessor);
 				var heroes = await grain.GetAllAsync();
@@ -26,7 +25,7 @@ public static class HeroesEndpoints
 			.WithDescription("Returns all heroes for the current tenant.");
 
 			group.MapGet("/{key}", async Task<Results<Ok<Hero?>, NotFound>> (
-				string key, IGrainFactory grainFactory, ITenantAccessor<AppTenant> tenantAccessor
+				string key, IGrainFactory grainFactory, ITenantAccessor tenantAccessor
 			) =>
 			{
 				var grain = GetHeroGrain(grainFactory, tenantAccessor);
@@ -43,7 +42,7 @@ public static class HeroesEndpoints
 		}
 	}
 
-	private static IHeroGrain GetHeroGrain(IGrainFactory grainFactory, ITenantAccessor<AppTenant> tenantAccessor)
+	private static IHeroGrain GetHeroGrain(IGrainFactory grainFactory, ITenantAccessor tenantAccessor)
 	{
 		// Tenant is guaranteed non-null here: middleware returns 400 before reaching this handler.
 		var grainKey = TenantGrainKey.Create(tenantAccessor.Tenant!.Key, "heroes");
