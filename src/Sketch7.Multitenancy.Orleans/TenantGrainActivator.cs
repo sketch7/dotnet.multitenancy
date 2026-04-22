@@ -32,18 +32,23 @@ public sealed class TenantGrainActivator<TTenant> : IGrainActivator
 {
 	private readonly ITenantOrleansResolver<TTenant> _resolver;
 	private readonly ObjectFactory _factory;
+	private readonly GrainConstructorArgumentFactory _argumentFactory;
 
 	/// <summary>
 	/// Initializes a new instance of <see cref="TenantGrainActivator{TTenant}"/> for the given grain class.
 	/// Caches a compiled <see cref="ObjectFactory"/> for the grain type to avoid repeated reflection on hot paths.
+	/// Uses <see cref="GrainConstructorArgumentFactory"/> to handle Orleans facet parameters (e.g.
+	/// <see cref="PersistentStateAttribute"/>) the same way <see cref="DefaultGrainActivator"/> does.
 	/// </summary>
 	public TenantGrainActivator(
+		IServiceProvider serviceProvider,
 		ITenantOrleansResolver<TTenant> resolver,
 		Type grainClass
 	)
 	{
 		_resolver = resolver;
-		_factory = ActivatorUtilities.CreateFactory(grainClass, Type.EmptyTypes);
+		_argumentFactory = new GrainConstructorArgumentFactory(serviceProvider, grainClass);
+		_factory = ActivatorUtilities.CreateFactory(grainClass, _argumentFactory.ArgumentTypes);
 	}
 
 	/// <summary>
@@ -59,7 +64,10 @@ public sealed class TenantGrainActivator<TTenant> : IGrainActivator
 		if (context.ActivationServices.GetService<TenantAccessor<TTenant>>() is { } tenantAccessor)
 			tenantAccessor.Tenant = tenant;
 
-		var instance = _factory(context.ActivationServices, null);
+		// CreateArguments resolves Orleans facet parameters (e.g. IPersistentState<T> from [PersistentState]).
+		// Regular DI parameters are resolved from context.ActivationServices by the ObjectFactory.
+		var arguments = _argumentFactory.CreateArguments(context);
+		var instance = _factory(context.ActivationServices, arguments);
 
 		// Set on IWithTenantAccessor<TTenant> property accessor pattern, if implemented.
 		if (instance is IWithTenantAccessor<TTenant> withTenantAccessor)
@@ -92,6 +100,7 @@ public sealed class TenantGrainActivator<TTenant> : IGrainActivator
 public sealed class ConfigureTenantGrainActivator<TTenant> : IConfigureGrainTypeComponents
 	where TTenant : class, ITenant
 {
+	private readonly IServiceProvider _serviceProvider;
 	private readonly ITenantOrleansResolver<TTenant> _resolver;
 	private readonly GrainClassMap _grainClassMap;
 
@@ -99,10 +108,12 @@ public sealed class ConfigureTenantGrainActivator<TTenant> : IConfigureGrainType
 	/// Initializes a new instance of <see cref="ConfigureTenantGrainActivator{TTenant}"/>.
 	/// </summary>
 	public ConfigureTenantGrainActivator(
+		IServiceProvider serviceProvider,
 		ITenantOrleansResolver<TTenant> resolver,
 		GrainClassMap grainClassMap
 	)
 	{
+		_serviceProvider = serviceProvider;
 		_resolver = resolver;
 		_grainClassMap = grainClassMap;
 	}
@@ -116,6 +127,6 @@ public sealed class ConfigureTenantGrainActivator<TTenant> : IConfigureGrainType
 		if (!typeof(ITenantGrain).IsAssignableFrom(grainClass))
 			return;
 
-		shared.SetComponent<IGrainActivator>(new TenantGrainActivator<TTenant>(_resolver, grainClass));
+		shared.SetComponent<IGrainActivator>(new TenantGrainActivator<TTenant>(_serviceProvider, _resolver, grainClass));
 	}
 }
