@@ -131,12 +131,23 @@ public class WorkerGrain : Grain, IWorkerGrain { }
 
 ### Tenant-scoped String Keys
 
-For tenant-aware grains use `TenantGrainKey.Create(tenantKey, grainKey)`. The format is `tenant/{tenantKey}/{grainId}` — the `tenant/` prefix prevents ambiguous parsing when the grain ID itself contains `/`.
+For tenant-aware grains use `TenantGrainKey.Create(...)`. Two formats are supported:
+
+| Format                         | Method                        | When to Use                                           |
+| ------------------------------ | ----------------------------- | ----------------------------------------------------- |
+| `tenant/{tenantKey}/{grainId}` | `Create(tenantKey, grainKey)` | Multiple grain instances per tenant (e.g. per-entity) |
+| `tenant/{tenantKey}`           | `Create(tenantKey)`           | One grain instance per tenant (singleton per tenant)  |
+
+The `tenant/` prefix prevents ambiguous parsing when the tenant or grain key itself contains `/`.
 
 ```csharp
-// Creating a key
+// Grain-specific key (multiple instances per tenant)
 var key = TenantGrainKey.Create("tenant-a", "heroes");
 // → "tenant/tenant-a/heroes"
+
+// Tenant-only key (one grain instance per tenant)
+var key = TenantGrainKey.Create("tenant-a");
+// → "tenant/tenant-a"
 
 // Resolving a grain
 grainFactory.GetGrain<IHeroGrain>(TenantGrainKey.Create(tenantKey, "heroes"));
@@ -144,12 +155,13 @@ grainFactory.GetGrain<IHeroGrain>(TenantGrainKey.Create(tenantKey, "heroes"));
 // Parsing inside a grain — GetTenantKey/GetGrainKey throw FormatException on bad format
 var primaryKey = this.GetPrimaryKeyString();
 var tenantKey = TenantGrainKey.GetTenantKey(primaryKey);
-var grainKey  = TenantGrainKey.GetGrainKey(primaryKey);
+var grainKey  = TenantGrainKey.GetGrainKey(primaryKey); // empty string for tenant-only keys
 
 // Safe parsing — TryParse returns a TenantGrainKey record struct (not out string? params)
 if (TenantGrainKey.TryParse(primaryKey, out var parsed))
 {
     // parsed.TenantKey, parsed.GrainKey
+    // parsed.IsTenantOnly — true when no grain segment
 }
 
 // Zero-allocation path from Orleans grain identity (IdSpan → UTF-8 bytes, no ToString())
@@ -273,24 +285,36 @@ public sealed class HeroGrain : Grain, IHeroGrain, IWithTenantAccessor<AppTenant
 
 ### Propagating tenant into a DI scope
 
-When a grain needs to resolve scoped, tenant-aware services (e.g. to call an `IHeroDataClient` proxy), create a new scope and copy the tenant from the grain's accessor:
+Inject tenant-aware services directly via the constructor. `TenantGrainActivator<TTenant>` sets up a tenant-scoped DI context before the grain is constructed — injected services are already resolved for the correct tenant. No `IServiceScopeFactory` or manual tenant propagation is needed:
 
 ```csharp
-private readonly IServiceScopeFactory _scopeFactory;
-
-private async Task EnsureHeroesAsync()
+public sealed class HeroGrain : Grain, IHeroGrain
 {
-    using var scope = _scopeFactory.CreateScope();
+    private readonly IHeroDataClient _heroDataClient;
+    private readonly IPersistentState<HeroGrainState> _state;
 
-    // Propagate the current tenant into the new scope
-    var accessor = scope.ServiceProvider.GetRequiredService<TenantAccessor<AppTenant>>();
-    accessor.Tenant = TenantAccessor.Tenant;
+    public HeroGrain(
+        IHeroDataClient heroDataClient,
+        [PersistentState("heroes", "heroes")]
+        IPersistentState<HeroGrainState> state
+    )
+    {
+        _heroDataClient = heroDataClient;
+        _state = state;
+    }
 
-    var dataClient = scope.ServiceProvider.GetRequiredService<IHeroDataClient>();
-    State.Heroes = await dataClient.GetAll();
-    await WriteStateAsync();
+    private async Task EnsureHeroesAsync()
+    {
+        if (_state.State.Heroes.Count > 0)
+            return;
+
+        _state.State.Heroes = await _heroDataClient.GetAll();
+        await _state.WriteStateAsync();
+    }
 }
 ```
+
+> `IWithTenantAccessor<TTenant>` is only needed when the grain itself must read the tenant identity (e.g. for logging or routing). For pure data access through a proxied service, constructor injection alone is sufficient.
 
 ---
 
@@ -311,7 +335,7 @@ This registers `ITenantOrleansResolver<TTenant>` and `TenantGrainActivator<TTena
 When writing a new tenant-aware grain:
 
 - [ ] Interface extends `IGrainWithStringKey` + `ITenantGrain`
-- [ ] Grain class implements `IWithTenantAccessor<TTenant>` with a `TenantAccessor<TTenant>` property
+- [ ] Grain class implements `IWithTenantAccessor<TTenant>` with a `TenantAccessor<TTenant>` property — **only if** the grain needs to read the tenant identity directly (e.g. logging, routing); omit for grains that only use injected tenant-aware services
 - [ ] Collections and complex types returned from interface methods use `[return: Immutable]`
 - [ ] Complex/collection parameters use `[Immutable]`
 - [ ] Read-only methods use `[AlwaysInterleave]`
