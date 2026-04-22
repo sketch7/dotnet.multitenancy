@@ -3,8 +3,9 @@ using System.Text;
 namespace Sketch7.Multitenancy.Orleans;
 
 /// <summary>
-/// Represents a parsed tenant-scoped grain key with zero-allocation span-based parsing.
-/// Composite keys follow the format: <c>tenant/{tenantKey}/{grainId}</c>.
+/// Represents a parsed tenant-scoped grain key with span-based parsing.
+/// Keys follow the format: <c>tenant/{tenantKey}/{grainId}</c> for grain-specific keys,
+/// or <c>tenant/{tenantKey}</c> for tenant-only keys (one grain instance per tenant).
 /// </summary>
 public readonly record struct TenantGrainKey
 {
@@ -17,13 +18,27 @@ public readonly record struct TenantGrainKey
 	/// <summary>Gets the tenant key segment.</summary>
 	public string TenantKey { get; init; }
 
-	/// <summary>Gets the grain-specific identifier segment.</summary>
+	/// <summary>Gets the grain-specific identifier segment. <see cref="string.Empty"/> for tenant-only keys.</summary>
 	public string GrainKey { get; init; }
+
+	/// <summary>Gets a value indicating whether this is a tenant-only key with no grain segment.</summary>
+	public bool IsTenantOnly => GrainKey is { Length: 0 };
 
 	private TenantGrainKey(string tenantKey, string grainKey)
 	{
 		TenantKey = tenantKey;
 		GrainKey = grainKey;
+	}
+
+	/// <summary>
+	/// Creates the tenant-only primary key string for a grain with one instance per tenant.
+	/// </summary>
+	/// <param name="tenantKey">The tenant key.</param>
+	/// <returns>A key string in the format <c>tenant/{tenantKey}</c>.</returns>
+	public static string Create(string tenantKey)
+	{
+		ArgumentException.ThrowIfNullOrWhiteSpace(tenantKey);
+		return string.Concat(Prefix, tenantKey);
 	}
 
 	/// <summary>
@@ -40,10 +55,13 @@ public readonly record struct TenantGrainKey
 	}
 
 	/// <summary>
-	/// Returns the composite key string in the format <c>tenant/{TenantKey}/{GrainKey}</c>.
+	/// Returns the key string. For tenant-only keys: <c>tenant/{TenantKey}</c>.
+	/// For grain-specific keys: <c>tenant/{TenantKey}/{GrainKey}</c>.
 	/// </summary>
 	public override string ToString()
-		=> string.Concat(Prefix, TenantKey, "/", GrainKey);
+		=> IsTenantOnly
+			? string.Concat(Prefix, TenantKey)
+			: string.Concat(Prefix, TenantKey, "/", GrainKey);
 
 	/// <summary>
 	/// Parses a composite grain key, throwing <see cref="FormatException"/> on failure.
@@ -54,7 +72,7 @@ public readonly record struct TenantGrainKey
 		=> TryParse(compositeKey, out var result)
 			? result
 			: throw new FormatException(
-				$"Invalid tenant grain key format '{compositeKey}'. Expected: 'tenant/{{tenantKey}}/{{grainId}}'.");
+				$"Invalid tenant grain key format '{compositeKey}'. Expected: 'tenant/{{tenantKey}}' or 'tenant/{{tenantKey}}/{{grainId}}'.");
 
 	/// <summary>
 	/// Attempts to parse a composite grain key from a <see cref="ReadOnlySpan{Char}"/>.
@@ -71,11 +89,25 @@ public readonly record struct TenantGrainKey
 		}
 
 		var rest = compositeKey[Prefix.Length..];
-		var separatorIndex = rest.IndexOf(Separator);
-		if (separatorIndex <= 0 || separatorIndex >= rest.Length - 1)
+		if (rest.IsEmpty)
 		{
 			result = default;
 			return false;
+		}
+
+		var separatorIndex = rest.IndexOf(Separator);
+		if (separatorIndex == 0 || separatorIndex == rest.Length - 1)
+		{
+			// Empty tenant segment (tenant//foo) or trailing slash (tenant/lol/) — invalid.
+			result = default;
+			return false;
+		}
+
+		if (separatorIndex < 0)
+		{
+			// No second separator — tenant-only key: tenant/{tenantKey}
+			result = new(rest.ToString(), string.Empty);
+			return true;
 		}
 
 		result = new(rest[..separatorIndex].ToString(), rest[(separatorIndex + 1)..].ToString());
@@ -108,11 +140,25 @@ public readonly record struct TenantGrainKey
 		}
 
 		var rest = utf8Key[prefix.Length..];
-		var separatorIndex = rest.IndexOf((byte)Separator);
-		if (separatorIndex <= 0 || separatorIndex >= rest.Length - 1)
+		if (rest.IsEmpty)
 		{
 			result = default;
 			return false;
+		}
+
+		var separatorIndex = rest.IndexOf((byte)Separator);
+		if (separatorIndex == 0 || separatorIndex == rest.Length - 1)
+		{
+			// Empty tenant segment or trailing slash — invalid.
+			result = default;
+			return false;
+		}
+
+		if (separatorIndex < 0)
+		{
+			// No second separator — tenant-only key: tenant/{tenantKey}
+			result = new(Encoding.UTF8.GetString(rest), string.Empty);
+			return true;
 		}
 
 		result = new(
