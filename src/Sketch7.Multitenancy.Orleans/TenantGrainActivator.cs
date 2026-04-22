@@ -47,7 +47,7 @@ public sealed class TenantGrainActivator<TTenant> : IGrainActivator
 	)
 	{
 		_resolver = resolver;
-		_argumentFactory = new GrainConstructorArgumentFactory(serviceProvider, grainClass);
+		_argumentFactory = new(serviceProvider, grainClass);
 		_factory = ActivatorUtilities.CreateFactory(grainClass, _argumentFactory.ArgumentTypes);
 	}
 
