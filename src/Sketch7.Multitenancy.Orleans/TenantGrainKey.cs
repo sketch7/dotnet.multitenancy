@@ -3,7 +3,7 @@ using System.Text;
 namespace Sketch7.Multitenancy.Orleans;
 
 /// <summary>
-/// Represents a parsed tenant-scoped grain key with zero-allocation span-based parsing.
+/// Represents a parsed tenant-scoped grain key with span-based parsing.
 /// Keys follow the format: <c>tenant/{tenantKey}/{grainId}</c> for grain-specific keys,
 /// or <c>tenant/{tenantKey}</c> for tenant-only keys (one grain instance per tenant).
 /// </summary>
