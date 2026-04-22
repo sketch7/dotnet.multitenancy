@@ -21,7 +21,7 @@ public static class OrleansMultitenancyExtensions
 			builder.ConfigureServices(services =>
 			{
 				services.AddSingleton<ITenantOrleansResolver<TTenant>, TenantOrleansResolver<TTenant>>();
-				services.AddSingleton<IConfigureGrainContextProvider, TenantGrainActivator<TTenant>>();
+				services.AddSingleton<IConfigureGrainTypeComponents, ConfigureTenantGrainActivator<TTenant>>();
 			});
 			return builder;
 		}
