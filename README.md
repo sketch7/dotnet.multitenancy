@@ -171,7 +171,7 @@ app.UseMultitenancy<AppTenant>(new MultitenancyMiddlewareOptions()
 siloBuilder.UseMultitenancy<AppTenant>();
 ```
 
-Registers `ITenantOrleansResolver<TTenant>` and `TenantGrainActivator<TTenant>` — tenant context is set once per grain activation.
+Registers `ITenantOrleansResolver<TTenant>` and `ConfigureTenantGrainActivator<TTenant>` (`IConfigureGrainTypeComponents`) — installs a per-grain-type `IGrainActivator` that propagates tenant context before grain construction.
 
 ### 2. Grain keys
 
