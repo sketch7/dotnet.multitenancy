@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Logging;
@@ -117,7 +116,7 @@ public static class Extensions
 				app.MapHealthChecks(HealthEndpointPath);
 
 				// Only health checks tagged with the "live" tag must pass for app to be considered alive
-				app.MapHealthChecks(AlivenessEndpointPath, new HealthCheckOptions
+				app.MapHealthChecks(AlivenessEndpointPath, new()
 				{
 					Predicate = r => r.Tags.Contains("live")
 				});

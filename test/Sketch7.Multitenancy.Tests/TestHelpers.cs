@@ -1,5 +1,4 @@
 using Microsoft.Extensions.DependencyInjection;
-using Sketch7.Multitenancy;
 
 namespace Sketch7.Multitenancy.Tests;
 
