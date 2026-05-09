@@ -44,7 +44,7 @@ public async Task Middleware_SetsTenantAccessor_WhenTenantResolved()
 
 // Expression body — only when there is no setup and a single assertion
 [Theory]
-[InlineData("lol", "grain-1", "lol/grain-1")]
+[InlineData("lol", "grain-1", "tenant/lol/grain-1")]
 public void Create_ReturnsExpectedCompositeKey(string tenantKey, string grainKey, string expected)
     => TenantGrainKey.Create(tenantKey, grainKey).ShouldBe(expected);
 ```

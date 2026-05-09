@@ -16,49 +16,20 @@ public record Hero
 	[Id(2)]
 	public int Health { get; init; }
 
-	/// <summary>Gets the hero role classification.</summary>
+	/// <summary>Gets the hero difficulty classification.</summary>
 	[Id(3)]
-	public HeroRoleType Role { get; init; }
+	public HeroDifficulty Difficulty { get; init; }
 
 	/// <summary>Gets the set of ability keys for this hero.</summary>
 	[Id(4)]
 	public HashSet<string> Abilities { get; init; } = [];
 }
 
-/// <summary>Hero role classification.</summary>
-public enum HeroRoleType
+/// <summary>Hero difficulty classification.</summary>
+public enum HeroDifficulty
 {
-	Assassin = 1,
-	Fighter = 2,
-	Mage = 3,
-	Support = 4,
-	Tank = 5,
-	Marksman = 6
-}
-
-/// <summary>Represents an individual hero ability.</summary>
-public record HeroAbility
-{
-	/// <summary>Gets the ability identifier.</summary>
-	public string Id { get; init; } = null!;
-
-	/// <summary>Gets the owning hero identifier.</summary>
-	public string HeroId { get; init; } = null!;
-
-	/// <summary>Gets the ability display name.</summary>
-	public string Name { get; init; } = null!;
-
-	/// <summary>Gets the base damage value.</summary>
-	public int Damage { get; init; }
-
-	/// <summary>Gets the damage type.</summary>
-	public DamageType DamageType { get; init; }
-}
-
-/// <summary>Damage type classification for hero abilities.</summary>
-public enum DamageType
-{
-	None,
-	AttackDamage,
-	MagicDamage
+	Easy = 1,
+	Medium = 2,
+	Hard = 3,
+	VeryHard = 4
 }

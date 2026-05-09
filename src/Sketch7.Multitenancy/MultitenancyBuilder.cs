@@ -160,11 +160,10 @@ public class MultitenancyBuilder<TTenant>
 			serviceType,
 			sp =>
 			{
-				var accessor = (ITenantAccessor<TTenant>)sp.GetRequiredService(
-					typeof(ITenantAccessor<TTenant>));
+				var accessor = sp.GetRequiredService<ITenantAccessor>();
 				var tenantKey = accessor.Tenant?.Key
 					?? throw new InvalidOperationException(
-						$"No tenant is set in {nameof(ITenantAccessor<>)}. " +
+						$"No tenant is set in {nameof(ITenantAccessor)}. " +
 						"Ensure multitenancy middleware runs before services are resolved.");
 				return ((IKeyedServiceProvider)sp).GetRequiredKeyedService(serviceType, tenantKey);
 			},

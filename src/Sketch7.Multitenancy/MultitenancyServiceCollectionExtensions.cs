@@ -1,6 +1,9 @@
-using Microsoft.Extensions.DependencyInjection;
+using Sketch7.Multitenancy;
 
-namespace Sketch7.Multitenancy;
+// ReSharper disable once CheckNamespace
+#pragma warning disable IDE0130 // Namespace does not match folder structure
+namespace Microsoft.Extensions.DependencyInjection;
+#pragma warning restore IDE0130 // Namespace does not match folder structure
 
 /// <summary>
 /// Extension members for registering multitenancy services on <see cref="IServiceCollection"/>.
@@ -20,6 +23,7 @@ public static class MultitenancyServiceCollectionExtensions
 		{
 			services.AddScoped<TenantAccessor<TTenant>>();
 			services.AddScoped<ITenantAccessor<TTenant>>(sp => sp.GetRequiredService<TenantAccessor<TTenant>>());
+			services.AddScoped<ITenantAccessor>(sp => sp.GetRequiredService<TenantAccessor<TTenant>>());
 
 			var builder = new MultitenancyBuilder<TTenant>(services);
 			configure?.Invoke(builder);

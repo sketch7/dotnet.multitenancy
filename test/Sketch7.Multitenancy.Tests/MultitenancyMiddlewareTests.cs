@@ -14,14 +14,14 @@ public class MultitenancyMiddlewareTests
 	[Fact]
 	public async Task Middleware_SetsTenantAccessor_WhenTenantResolved()
 	{
-		var (scope, context) = BuildMiddlewareContext(new TestTenant { Key = "lol" });
+		var (scope, context) = BuildMiddlewareContext(new() { Key = "lol" });
 		using var _ = scope;
 
-		bool nextInvoked = false;
+		var nextInvoked = false;
 		await BuildMiddleware(next: req => { nextInvoked = true; return Task.CompletedTask; })
 			.InvokeAsync(context);
 
-		scope.ServiceProvider.GetRequiredService<ITenantAccessor<TestTenant>>()
+		scope.ServiceProvider.GetRequiredService<ITenantAccessor>()
 			.Tenant!.Key.ShouldBe("lol");
 		nextInvoked.ShouldBeTrue();
 	}
@@ -32,7 +32,7 @@ public class MultitenancyMiddlewareTests
 		var (scope, context) = BuildMiddlewareContext();
 		using var _ = scope;
 
-		bool nextInvoked = false;
+		var nextInvoked = false;
 		await BuildMiddleware(next: req => { nextInvoked = true; return Task.CompletedTask; })
 			.InvokeAsync(context);
 
@@ -62,8 +62,15 @@ public class MultitenancyMiddlewareTests
 		services.AddMultitenancy<TestTenant>();
 		services.AddScoped<ITenantHttpResolver<TestTenant>>(_ => new StaticTenantResolver<TestTenant>(tenant));
 		var scope = services.BuildServiceProvider().CreateScope();
-		var context = new DefaultHttpContext { RequestServices = scope.ServiceProvider };
-		context.Response.Body = new MemoryStream();
+		var context = new DefaultHttpContext
+		{
+			RequestServices = scope.ServiceProvider,
+			Response =
+			{
+				Body = new MemoryStream()
+			}
+		};
+
 		return (scope, context);
 	}
 
@@ -82,5 +89,5 @@ file sealed class StaticTenantResolver<TTenant> : ITenantHttpResolver<TTenant>
 
 	public StaticTenantResolver(TTenant? tenant) => _tenant = tenant;
 
-	public Task<TTenant?> Resolve(HttpContext httpContext) => Task.FromResult(_tenant);
+	public ValueTask<TTenant?> Resolve(HttpContext httpContext) => new(_tenant);
 }

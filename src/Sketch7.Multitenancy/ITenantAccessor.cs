@@ -1,16 +1,27 @@
 namespace Sketch7.Multitenancy;
 
 /// <summary>
-/// Provides access to the current tenant in the active scope.
+/// Provides non-generic access to the current tenant in the active scope.
+/// </summary>
+public interface ITenantAccessor
+{
+	/// <summary>
+	/// Gets the current tenant, or <c>null</c> if not resolved yet.
+	/// </summary>
+	ITenant? Tenant { get; }
+}
+
+/// <summary>
+/// Provides typed access to the current tenant in the active scope.
 /// </summary>
 /// <typeparam name="TTenant">The tenant type.</typeparam>
-public interface ITenantAccessor<TTenant>
+public interface ITenantAccessor<out TTenant> : ITenantAccessor
 	where TTenant : class, ITenant
 {
 	/// <summary>
 	/// Gets the current tenant, or <c>null</c> if not resolved yet.
 	/// </summary>
-	TTenant? Tenant { get; }
+	new TTenant? Tenant { get; }
 }
 
 /// <summary>
@@ -23,4 +34,6 @@ public class TenantAccessor<TTenant> : ITenantAccessor<TTenant>
 {
 	/// <inheritdoc />
 	public TTenant? Tenant { get; set; }
+
+	ITenant? ITenantAccessor.Tenant => Tenant;
 }

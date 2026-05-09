@@ -10,7 +10,7 @@ Multi-tenancy library for .NET 10 (C# 14) using native Microsoft DI keyed servic
 - Per-tenant service registration using native Microsoft DI keyed services — no third-party containers
 - Transparent unkeyed proxy — controllers and handlers stay unaware of multitenancy; inject `IMyService` and get the right tenant implementation automatically
 - Fluent builder with by-key, predicate, and all-tenants registration
-- Microsoft Orleans support — tenant-scoped grain keys and a call filter that propagates tenant context
+- Microsoft Orleans support — tenant-scoped grain keys and a grain activator that propagates tenant context once per grain activation
 
 ## Packages
 
@@ -18,7 +18,7 @@ Multi-tenancy library for .NET 10 (C# 14) using native Microsoft DI keyed servic
 | ------------------------------ | ----------------------------------------------------------------------------------- |
 | `Sketch7.Multitenancy`         | Core abstractions and builder (`ITenant`, `ITenantAccessor`, `MultitenancyBuilder`) |
 | `Sketch7.Multitenancy.AspNet`  | ASP.NET Core middleware and HTTP resolver                                           |
-| `Sketch7.Multitenancy.Orleans` | Orleans grain call filter and tenant grain key helpers                              |
+| `Sketch7.Multitenancy.Orleans` | Orleans grain activator and tenant grain key helpers                                |
 
 ---
 
@@ -146,7 +146,8 @@ builder.Services
             .For("hots", s => s.AddScoped<IHeroDataClient, HotsHeroDataClient>())
             // by predicate (requires WithRegistry or WithTenants)
             .For(t => t.Organization == "riot", s => s
-                .AddScoped<IHeroDataClient, LoLHeroDataClient>())
+              .AddScoped<IHeroDataClient, LoLHeroDataClient>()
+            )
             // same service for every tenant
             .ForAll(s => s.AddScoped<IAuditLogger, DefaultAuditLogger>())
         )
@@ -170,43 +171,57 @@ app.UseMultitenancy<AppTenant>(new MultitenancyMiddlewareOptions()
 siloBuilder.UseMultitenancy<AppTenant>();
 ```
 
-This registers `TenantGrainCallFilter<T>` as an incoming call filter that automatically populates `ITenantAccessor<T>` for every `ITenantGrain` call.
+Registers `ITenantOrleansResolver<TTenant>` and `ConfigureTenantGrainActivator<TTenant>` (`IConfigureGrainTypeComponents`) — installs a per-grain-type `IGrainActivator` that propagates tenant context before grain construction.
 
-### 2. Create tenant-scoped grain keys
+### 2. Grain keys
 
-Grain keys follow the `{tenantKey}/{grainKey}` convention:
+Two key formats are supported. The `tenant/` prefix prevents ambiguous parsing when the grain ID itself contains `/`:
+
+| Format                         | Use case                                    |
+| ------------------------------ | ------------------------------------------- |
+| `tenant/{tenantKey}/{grainId}` | Multiple grain instances per tenant         |
+| `tenant/{tenantKey}`           | One grain instance per tenant (tenant-only) |
 
 ```csharp
-// Create
-string key = TenantGrainKey.Create("lol", "hero-42"); // "lol/hero-42"
+// grain-specific key
+string key = TenantGrainKey.Create("lol", "hero-42"); // "tenant/lol/hero-42"
+string tenantKey = TenantGrainKey.GetTenantKey(key);  // "lol"
+string grainKey  = TenantGrainKey.GetGrainKey(key);   // "hero-42"
 
-// Parse
-string tenantKey = TenantGrainKey.GetTenantKey("lol/hero-42"); // "lol"
-string grainKey  = TenantGrainKey.GetGrainKey("lol/hero-42");  // "hero-42"
+// tenant-only key — one grain instance per tenant
+string tenantOnlyKey = TenantGrainKey.Create("lol"); // "tenant/lol"
 
-// Safe parse
-if (TenantGrainKey.TryParse(compositeKey, out var tenant, out var grain))
+// TryParse returns a TenantGrainKey record struct
+if (TenantGrainKey.TryParse(key, out var parsed))
 {
-    // use tenant, grain
+    Console.WriteLine(parsed.TenantKey);   // "lol"
+    Console.WriteLine(parsed.IsTenantOnly); // false for grain-specific, true for tenant-only
 }
 ```
 
-### 3. Implement a tenant-aware grain
+### 3. Grain authoring
+
+Two patterns are supported:
+
+**Constructor injection (recommended)** — tenant context is set in `ActivationServices` before the grain is constructed, so tenant-aware services resolve correctly via the multitenancy proxy:
 
 ```csharp
-public sealed class HeroGrain : Grain, IHeroGrain, IWithTenantAccessor<AppTenant>
+public sealed class HeroGrain : Grain, IHeroGrain
+{
+    public HeroGrain(IHeroDataClient heroDataClient, ...) { ... }
+}
+```
+
+**Property accessor** — implement `IWithTenantAccessor<T>` to receive the `AppTenant` object directly inside grain methods:
+
+```csharp
+public sealed class HeroTypeGrain : Grain, IHeroTypeGrain, IWithTenantAccessor<AppTenant>
 {
     public TenantAccessor<AppTenant> TenantAccessor { get; } = new();
-
-    public Task<string> GetTenantKeyAsync()
-        => Task.FromResult(TenantGrainKey.GetTenantKey(this.GetPrimaryKeyString()));
-
-    [AlwaysInterleave]
-    public Task<List<Hero>> GetAllAsync() => Task.FromResult(State.Heroes);
 }
 ```
 
-### 4. Define the grain interface (Orleans best practices)
+### 4. Grain interface
 
 ```csharp
 public interface IHeroGrain : IGrainWithStringKey, ITenantGrain
@@ -214,9 +229,5 @@ public interface IHeroGrain : IGrainWithStringKey, ITenantGrain
     [AlwaysInterleave]
     [return: Immutable]
     Task<List<Hero>> GetAllAsync();
-
-    [AlwaysInterleave]
-    [return: Immutable]
-    Task<Hero?> GetByKeyAsync(string heroKey);
 }
 ```

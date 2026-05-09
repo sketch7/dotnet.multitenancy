@@ -52,8 +52,8 @@ For single-expression members: prefer expression bodies (`=>`). Place `=>` on th
 
 ```csharp
 // Long — arrow on next line
-public Task<string> GetTenantKeyAsync()
-    => Task.FromResult(TenantGrainKey.GetTenantKey(this.GetPrimaryKeyString()));
+public Task<IReadOnlyList<Hero>> GetAllAsync()
+    => Task.FromResult<IReadOnlyList<Hero>>(_state.State.Heroes);
 
 // Short — same line when it fits within the line length
 public string Key => _key;

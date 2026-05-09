@@ -6,8 +6,8 @@ public class AppTenantHttpResolver(
 	IAppTenantRegistry tenantRegistry
 ) : ITenantHttpResolver<AppTenant>
 {
-	public Task<AppTenant?> Resolve(HttpContext httpContext)
+	public ValueTask<AppTenant?> Resolve(HttpContext httpContext)
 		=> httpContext.Request.Headers.TryGetValue("X-SSV-Tenant", out var tenantValue)
-			? Task.FromResult(tenantRegistry.GetOrDefault(tenantValue.ToString()))
-			: Task.FromResult<AppTenant?>(null);
+			? new(tenantRegistry.GetOrDefault(tenantValue.ToString()))
+			: new ValueTask<AppTenant?>();
 }

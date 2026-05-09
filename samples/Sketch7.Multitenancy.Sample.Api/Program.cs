@@ -3,6 +3,7 @@ using Sketch7.Multitenancy;
 using Sketch7.Multitenancy.AspNet;
 using Sketch7.Multitenancy.Orleans;
 using Sketch7.Multitenancy.Sample.Api.Heroes;
+using Sketch7.Multitenancy.Sample.Api.HeroType;
 using Sketch7.Multitenancy.Sample.Api.Tenancy;
 using Sketch7.Multitenancy.Sample.Api.Tenant;
 using StackExchange.Redis;
@@ -61,5 +62,6 @@ app.MapScalarApiReference();
 app.UseMultitenancy<AppTenant>();
 app.MapTenantEndpoints();
 app.MapHeroesEndpoints();
+app.MapHeroTypeEndpoints();
 
 app.Run();
